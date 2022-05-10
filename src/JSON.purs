@@ -1,32 +1,32 @@
 module JSON
-( E
-, readJSON
-, readJSON'
-, readJSON_
-, writeJSON
-, write
-, read
-, read'
-, read_
-, parseJSON
-, undefined
-, unsafeStringify
+  ( E
+  , readJSON
+  , readJSON'
+  , readJSON_
+  , writeJSON
+  , write
+  , read
+  , read'
+  , read_
+  , parseJSON
+  , undefined
+  , unsafeStringify
 
-, class ReadForeign
-, readImpl
-, class ReadForeignFields
-, getFields
-, class ReadForeignVariant
-, readVariantImpl
+  , class ReadForeign
+  , readImpl
+  , class ReadForeignFields
+  , getFields
+  , class ReadForeignVariant
+  , readVariantImpl
 
-, class WriteForeign
-, writeImpl
-, class WriteForeignFields
-, writeImplFields
-, class WriteForeignVariant
-, writeVariantImpl
+  , class WriteForeign
+  , writeImpl
+  , class WriteForeignFields
+  , writeImplFields
+  , class WriteForeignVariant
+  , writeVariantImpl
 
-) where
+  ) where
 
 import Prelude
 
@@ -63,230 +63,253 @@ type E a = Either MultipleErrors a
 
 -- | Read a JSON string to a type `a` while returning a `MultipleErrors` if the
 -- | parsing failed.
-readJSON :: forall a
-  .  ReadForeign a
-  => String
-  -> E a
+readJSON ∷
+  ∀ a.
+  ReadForeign a ⇒
+  String →
+  E a
 readJSON = runExcept <<< (readImpl <=< parseJSON)
 
 -- | Read a JSON string to a type `a` using `F a`. Useful with record types.
-readJSON' :: forall a
-  .  ReadForeign a
-  => String
-  -> F a
+readJSON' ∷
+  ∀ a.
+  ReadForeign a ⇒
+  String →
+  F a
 readJSON' = readImpl <=< parseJSON
 
 -- | Read a JSON string to a type `a` while returning `Nothing` if the parsing
 -- | failed.
-readJSON_ ::  forall a
-   . ReadForeign a
-  => String
-  -> Maybe a
+readJSON_ ∷
+  ∀ a.
+  ReadForeign a ⇒
+  String →
+  Maybe a
 readJSON_ = hush <<< readJSON
 
 -- | JSON.stringify
-foreign import _unsafeStringify :: forall a. a -> String
+foreign import _unsafeStringify ∷ ∀ a. a → String
 
-unsafeStringify :: forall a. a -> String
+unsafeStringify ∷ ∀ a. a → String
 unsafeStringify = _unsafeStringify
 
 -- | Write a JSON string from a type `a`.
-writeJSON :: forall a
-  .  WriteForeign a
-  => a
-  -> String
+writeJSON ∷
+  ∀ a.
+  WriteForeign a ⇒
+  a →
+  String
 writeJSON = _unsafeStringify <<< writeImpl
 
-write :: forall a
-  .  WriteForeign a
-  => a
-  -> Foreign
+write ∷
+  ∀ a.
+  WriteForeign a ⇒
+  a →
+  Foreign
 write = writeImpl
 
 -- | Read a Foreign value to a type
-read :: forall a
-   . ReadForeign a
-  => Foreign
-  -> E a
+read ∷
+  ∀ a.
+  ReadForeign a ⇒
+  Foreign →
+  E a
 read = runExcept <<< readImpl
 
 -- | Read a value of any type as Foreign to a type
-readAsForeign :: forall a b
-   . ReadForeign a
-  => b
-  -> E a
+readAsForeign ∷
+  ∀ a b.
+  ReadForeign a ⇒
+  b →
+  E a
 readAsForeign = read <<< unsafeToForeign
 
-read' :: forall a
-  .  ReadForeign a
-  => Foreign
-  -> F a
+read' ∷
+  ∀ a.
+  ReadForeign a ⇒
+  Foreign →
+  F a
 read' = readImpl
 
 -- | Read a Foreign value to a type, as a Maybe of type
-read_ :: forall a
-   . ReadForeign a
-  => Foreign
-  -> Maybe a
+read_ ∷
+  ∀ a.
+  ReadForeign a ⇒
+  Foreign →
+  Maybe a
 read_ = hush <<< read
 
-foreign import _parseJSON :: EU.EffectFn1 String Foreign
+foreign import _parseJSON ∷ EU.EffectFn1 String Foreign
 
-parseJSON :: String -> F Foreign
-parseJSON
-    = ExceptT
+parseJSON ∷ String → F Foreign
+parseJSON = ExceptT
   <<< Identity
   <<< lmap (pure <<< ForeignError <<< message)
   <<< runPure
   <<< try
   <<< EU.runEffectFn1 _parseJSON
   where
-    -- Nate Faubion: "It uses unsafePerformEffect because that’s the only way to catch exceptions and still use the builtin json decoder"
-    runPure = unsafePerformEffect
+  -- Nate Faubion: "It uses unsafePerformEffect because that’s the only way to catch exceptions and still use the builtin json decoder"
+  runPure = unsafePerformEffect
 
-foreign import _undefined :: Foreign
+foreign import _undefined ∷ Foreign
 
-undefined :: Foreign
+undefined ∷ Foreign
 undefined = _undefined
 
 -- | A class for reading foreign values to a type
 class ReadForeign a where
-  readImpl :: Foreign -> F a
+  readImpl ∷ Foreign → F a
 
-instance readForeign :: ReadForeign Foreign where
+instance readForeign ∷ ReadForeign Foreign where
   readImpl = pure
 
-instance readChar :: ReadForeign Char where
+instance readChar ∷ ReadForeign Char where
   readImpl = readChar
 
-instance readNumber :: ReadForeign Number where
+instance readNumber ∷ ReadForeign Number where
   readImpl = readNumber
 
-instance readInt :: ReadForeign Int where
+instance readInt ∷ ReadForeign Int where
   readImpl = readInt
 
-instance readString :: ReadForeign String where
+instance readString ∷ ReadForeign String where
   readImpl = readString
 
-instance readBoolean :: ReadForeign Boolean where
+instance readBoolean ∷ ReadForeign Boolean where
   readImpl = readBoolean
 
-instance readArray :: ReadForeign a => ReadForeign (Array a) where
+instance readArray ∷ ReadForeign a ⇒ ReadForeign (Array a) where
   readImpl = traverseWithIndex readAtIdx <=< readArray
     where
-      readAtIdx i f = withExcept (map (ErrorAtIndex i)) (readImpl f)
+    readAtIdx i f = withExcept (map (ErrorAtIndex i)) (readImpl f)
 
-instance readMaybe :: ReadForeign a => ReadForeign (Maybe a) where
+instance readMaybe ∷ ReadForeign a ⇒ ReadForeign (Maybe a) where
   readImpl = readNullOrUndefined readImpl
     where
-      readNullOrUndefined _ value | isNull value || isUndefined value = pure Nothing
-      readNullOrUndefined f value = Just <$> f value
+    readNullOrUndefined _ value | isNull value || isUndefined value = pure
+      Nothing
+    readNullOrUndefined f value = Just <$> f value
 
-instance readNullable :: ReadForeign a => ReadForeign (Nullable a) where
+instance readNullable ∷ ReadForeign a ⇒ ReadForeign (Nullable a) where
   readImpl o = withExcept (map reformat) $
     map toNullable <$> traverse readImpl =<< readNull o
     where
-      reformat error = case error of
-        TypeMismatch inner other -> TypeMismatch ("Nullable " <> inner) other
-        _ -> error
+    reformat error = case error of
+      TypeMismatch inner other → TypeMismatch ("Nullable " <> inner) other
+      _ → error
 
-instance readObject :: ReadForeign a => ReadForeign (Object.Object a) where
+instance readObject ∷ ReadForeign a ⇒ ReadForeign (Object.Object a) where
   readImpl = sequence <<< Object.mapWithKey (const readImpl) <=< readObject'
     where
-      readObject' :: Foreign -> F (Object Foreign)
-      readObject' value
-        | tagOf value == "Object" = pure $ unsafeFromForeign value
-        | otherwise = fail $ TypeMismatch "Object" (tagOf value)
+    readObject' ∷ Foreign → F (Object Foreign)
+    readObject' value
+      | tagOf value == "Object" = pure $ unsafeFromForeign value
+      | otherwise = fail $ TypeMismatch "Object" (tagOf value)
 
-
-instance readRecord ::
+instance readRecord ∷
   ( RowToList fields fieldList
   , ReadForeignFields fieldList () fields
-  ) => ReadForeign (Record fields) where
+  ) ⇒
+  ReadForeign (Record fields) where
   readImpl o = flip Builder.build {} <$> getFields fieldListP o
     where
-      fieldListP = Proxy :: Proxy fieldList
+    fieldListP = Proxy ∷ Proxy fieldList
 
 -- | A class for reading foreign values from properties
-class ReadForeignFields (xs :: RowList Type) (from :: Row Type) (to :: Row Type)
-  | xs -> from to where
-  getFields :: Proxy xs
-    -> Foreign
-    -> F (Builder (Record from) (Record to))
+class
+  ReadForeignFields (xs ∷ RowList Type) (from ∷ Row Type) (to ∷ Row Type)
+  | xs → from to where
+  getFields ∷
+    Proxy xs →
+    Foreign →
+    F (Builder (Record from) (Record to))
 
-instance readFieldsCons ::
+instance readFieldsCons ∷
   ( IsSymbol name
   , ReadForeign ty
   , ReadForeignFields tail from from'
   , Row.Lacks name from'
   , Row.Cons name ty from' to
-  ) => ReadForeignFields (Cons name ty tail) from to where
+  ) ⇒
+  ReadForeignFields (Cons name ty tail) from to where
   getFields _ obj = (compose <$> first) `exceptTApply` rest
     where
-      first = do
-        value <- withExcept' (readImpl =<< readProp name obj)
-        pure $ Builder.insert nameP value
-      rest = getFields tailP obj
-      nameP = Proxy :: Proxy name
-      tailP = Proxy :: Proxy tail
-      name = reflectSymbol nameP
-      withExcept' = withExcept <<< map $ ErrorAtProperty name
+    first = do
+      value ← withExcept' (readImpl =<< readProp name obj)
+      pure $ Builder.insert nameP value
+    rest = getFields tailP obj
+    nameP = Proxy ∷ Proxy name
+    tailP = Proxy ∷ Proxy tail
+    name = reflectSymbol nameP
+    withExcept' = withExcept <<< map $ ErrorAtProperty name
 
-exceptTApply :: forall a b e m. Semigroup e => Applicative m => ExceptT e m (a -> b) -> ExceptT e m a -> ExceptT e m b
+exceptTApply ∷
+  ∀ a b e m.
+  Semigroup e ⇒
+  Applicative m ⇒
+  ExceptT e m (a → b) →
+  ExceptT e m a →
+  ExceptT e m b
 exceptTApply fun a = ExceptT $ applyEither
   <$> runExceptT fun
   <*> runExceptT a
 
-applyEither :: forall e a b. Semigroup e => Either e (a -> b) -> Either e a -> Either e b
+applyEither ∷ ∀ e a b. Semigroup e ⇒ Either e (a → b) → Either e a → Either e b
 applyEither (Left e) (Right _) = Left e
 applyEither (Left e1) (Left e2) = Left (e1 <> e2)
 applyEither (Right _) (Left e) = Left e
 applyEither (Right fun) (Right a) = Right (fun a)
 
-instance readFieldsNil ::
+instance readFieldsNil ∷
   ReadForeignFields Nil () () where
   getFields _ _ =
     pure identity
 
-instance readForeignVariant ::
+instance readForeignVariant ∷
   ( RowToList variants rl
   , ReadForeignVariant rl variants
-  ) => ReadForeign (Variant variants) where
-  readImpl o = readVariantImpl (Proxy :: Proxy rl) o
+  ) ⇒
+  ReadForeign (Variant variants) where
+  readImpl o = readVariantImpl (Proxy ∷ Proxy rl) o
 
-class ReadForeignVariant (xs :: RowList Type) (row :: Row Type)
-  | xs -> row where
-  readVariantImpl :: Proxy xs
-    -> Foreign
-    -> F (Variant row)
+class
+  ReadForeignVariant (xs ∷ RowList Type) (row ∷ Row Type)
+  | xs → row where
+  readVariantImpl ∷
+    Proxy xs →
+    Foreign →
+    F (Variant row)
 
-instance readVariantNil ::
+instance readVariantNil ∷
   ReadForeignVariant Nil trash where
-  readVariantImpl _ _ = fail $ ForeignError "Unable to match any variant member."
+  readVariantImpl _ _ = fail $ ForeignError
+    "Unable to match any variant member."
 
-instance readVariantCons ::
+instance readVariantCons ∷
   ( IsSymbol name
   , ReadForeign ty
   , Row.Cons name ty trash row
   , ReadForeignVariant tail row
-  ) => ReadForeignVariant (Cons name ty tail) row where
-  readVariantImpl _ o = do
-    obj :: { type :: String, value :: Foreign } <- readImpl o
-    if obj.type == name
-      then do
-        value :: ty <- readImpl obj.value
+  ) ⇒
+  ReadForeignVariant (Cons name ty tail) row where
+  readVariantImpl _ o =
+    do
+      obj ∷ { type ∷ String, value ∷ Foreign } ← readImpl o
+      if obj.type == name then do
+        value ∷ ty ← readImpl obj.value
         pure $ inj namep value
       else
         (fail <<< ForeignError $ "Did not match variant tag " <> name)
-    <|> readVariantImpl (Proxy :: Proxy tail) o
+      <|> readVariantImpl (Proxy ∷ Proxy tail) o
     where
-      namep = Proxy :: Proxy name
-      name = reflectSymbol namep
+    namep = Proxy ∷ Proxy name
+    name = reflectSymbol namep
 
 -- -- | A class for writing a value into JSON
 -- -- | need to do this intelligently using Foreign probably, because of null and undefined whatever
 class WriteForeign a where
-  writeImpl :: a -> Foreign
+  writeImpl ∷ a → Foreign
 
 instance WriteForeign Foreign where
   writeImpl = identity
@@ -306,30 +329,32 @@ instance WriteForeign Number where
 instance WriteForeign Boolean where
   writeImpl = unsafeToForeign
 
-instance WriteForeign a => WriteForeign (Array a) where
+instance WriteForeign a ⇒ WriteForeign (Array a) where
   writeImpl xs = unsafeToForeign $ writeImpl <$> xs
 
-instance WriteForeign a => WriteForeign (Maybe a) where
+instance WriteForeign a ⇒ WriteForeign (Maybe a) where
   writeImpl = maybe undefined writeImpl
 
-instance WriteForeign a => WriteForeign (Nullable a) where
+instance WriteForeign a ⇒ WriteForeign (Nullable a) where
   writeImpl = maybe (unsafeToForeign $ toNullable Nothing) writeImpl <<< toMaybe
 
-instance WriteForeign a => WriteForeign (Object.Object a) where
+instance WriteForeign a ⇒ WriteForeign (Object.Object a) where
   writeImpl = unsafeToForeign <<< Object.mapWithKey (const writeImpl)
 
 instance
   ( RowToList row rl
   , WriteForeignFields rl row () to
-  ) => WriteForeign (Record row) where
+  ) ⇒
+  WriteForeign (Record row) where
   writeImpl rec = unsafeToForeign $ Builder.build steps {}
     where
-      rlp = Proxy :: Proxy rl
-      steps = writeImplFields rlp rec
+    rlp = Proxy ∷ Proxy rl
+    steps = writeImplFields rlp rec
 
-class WriteForeignFields (rl :: RowList Type) row (from :: Row Type) (to :: Row Type)
-  | rl -> row from to where
-  writeImplFields :: forall g. g rl -> Record row -> Builder (Record from) (Record to)
+class
+  WriteForeignFields (rl ∷ RowList Type) row (from ∷ Row Type) (to ∷ Row Type)
+  | rl → row from to where
+  writeImplFields ∷ ∀ g. g rl → Record row → Builder (Record from) (Record to)
 
 instance
   ( IsSymbol name
@@ -338,14 +363,16 @@ instance
   , Row.Cons name ty whatever row
   , Row.Lacks name from'
   , Row.Cons name Foreign from' to
-  ) => WriteForeignFields (Cons name ty tail) row from to where
+  ) ⇒
+  WriteForeignFields (Cons name ty tail) row from to where
   writeImplFields _ rec = result
     where
-      namep = Proxy :: Proxy name
-      value = writeImpl $ get namep rec
-      tailp = Proxy :: Proxy tail
-      rest = writeImplFields tailp rec
-      result = Builder.insert namep value <<< rest
+    namep = Proxy ∷ Proxy name
+    value = writeImpl $ get namep rec
+    tailp = Proxy ∷ Proxy tail
+    rest = writeImplFields tailp rec
+    result = Builder.insert namep value <<< rest
+
 instance
   WriteForeignFields Nil row () () where
   writeImplFields _ _ = identity
@@ -353,12 +380,14 @@ instance
 instance
   ( RowToList row rl
   , WriteForeignVariant rl row
-  ) => WriteForeign (Variant row) where
-  writeImpl variant = writeVariantImpl (Proxy :: Proxy rl) variant
+  ) ⇒
+  WriteForeign (Variant row) where
+  writeImpl variant = writeVariantImpl (Proxy ∷ Proxy rl) variant
 
-class WriteForeignVariant (rl :: RowList Type) (row :: Row Type)
-  | rl -> row where
-  writeVariantImpl :: forall g. g rl -> Variant row -> Foreign
+class
+  WriteForeignVariant (rl ∷ RowList Type) (row ∷ Row Type)
+  | rl → row where
+  writeVariantImpl ∷ ∀ g. g rl → Variant row → Foreign
 
 instance
   WriteForeignVariant Nil () where
@@ -371,24 +400,28 @@ instance
   , WriteForeign ty
   , Row.Cons name ty subRow row
   , WriteForeignVariant tail subRow
-  ) => WriteForeignVariant (Cons name ty tail) row where
+  ) ⇒
+  WriteForeignVariant (Cons name ty tail) row where
   writeVariantImpl _ variant =
     on
       namep
       writeVariant
-      (writeVariantImpl (Proxy :: Proxy tail))
+      (writeVariantImpl (Proxy ∷ Proxy tail))
       variant
     where
-    namep = Proxy :: Proxy name
+    namep = Proxy ∷ Proxy name
     writeVariant value = unsafeToForeign
       { type: reflectSymbol namep
       , value: writeImpl value
       }
 
-instance ReadForeign a => ReadForeign (NonEmptyArray a) where
+instance ReadForeign a ⇒ ReadForeign (NonEmptyArray a) where
   readImpl f = do
-    raw :: Array a <- readImpl f
-    except $ note (singleton $ ForeignError "Nonempty array expected, got empty array") $ fromArray raw
+    raw ∷ Array a ← readImpl f
+    except
+      $ note
+          (singleton $ ForeignError "Nonempty array expected, got empty array")
+      $ fromArray raw
 
-instance writeForeignNEArray :: WriteForeign a => WriteForeign (NonEmptyArray a) where
+instance writeForeignNEArray ∷ WriteForeign a ⇒ WriteForeign (NonEmptyArray a) where
   writeImpl a = writeImpl <<< toArray $ a

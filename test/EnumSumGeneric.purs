@@ -14,52 +14,55 @@ import JSON as JSON
 import Test.Assert (assert)
 import Type.Prelude (class IsSymbol, Proxy(..), reflectSymbol)
 
-enumReadForeign :: forall a rep
-   . Generic a rep
-  => EnumReadForeign rep
-  => Foreign
-  -> Foreign.F a
+enumReadForeign ∷
+  ∀ a rep.
+  Generic a rep ⇒
+  EnumReadForeign rep ⇒
+  Foreign →
+  Foreign.F a
 enumReadForeign f =
   to <$> enumReadForeignImpl f
 
 -- type class for "enums", or nullary sum types
 class EnumReadForeign rep where
-  enumReadForeignImpl :: Foreign -> Foreign.F rep
+  enumReadForeignImpl ∷ Foreign → Foreign.F rep
 
 instance
   ( EnumReadForeign a
   , EnumReadForeign b
-  ) => EnumReadForeign (Sum a b) where
-  enumReadForeignImpl f
-      = Inl <$> enumReadForeignImpl f
+  ) ⇒
+  EnumReadForeign (Sum a b) where
+  enumReadForeignImpl f = Inl <$> enumReadForeignImpl f
     <|> Inr <$> enumReadForeignImpl f
 
 instance
   ( IsSymbol name
-  ) => EnumReadForeign (Constructor name NoArguments) where
+  ) ⇒
+  EnumReadForeign (Constructor name NoArguments) where
   enumReadForeignImpl f = do
-    s <- JSON.readImpl f
-    if s == name
-       then pure $ Constructor NoArguments
-       else throwError <<< pure <<< Foreign.ForeignError $
-            "Enum string " <> s <> " did not match expected string " <> name
+    s ← JSON.readImpl f
+    if s == name then pure $ Constructor NoArguments
+    else throwError <<< pure <<< Foreign.ForeignError $
+      "Enum string " <> s <> " did not match expected string " <> name
     where
-      name = reflectSymbol (Proxy :: Proxy name)
+    name = reflectSymbol (Proxy ∷ Proxy name)
 
 data Fruit
   = Abogado
   | Boat
   | Candy
+
 derive instance Generic Fruit _
 instance JSON.ReadForeign Fruit where
   readImpl = enumReadForeign
+
 instance Show Fruit where
   show = genericShow
 
-readFruit :: String -> Either Foreign.MultipleErrors Fruit
+readFruit ∷ String → Either Foreign.MultipleErrors Fruit
 readFruit = JSON.readJSON
 
-main :: Effect Unit
+main ∷ Effect Unit
 main = do
   assert <<< isRight $ readFruit "\"Abogado\""
   assert <<< isRight $ readFruit "\"Boat\""
