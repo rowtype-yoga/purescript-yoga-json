@@ -13,7 +13,7 @@ import Effect (Effect)
 import Effect.Exception (throw)
 import Foreign (ForeignError(..), MultipleErrors)
 import Foreign.Object (Object)
-import JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON)
+import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON)
 import Test.Assert (assertEqual)
 import Test.EnumSumGeneric as Test.EnumSumGeneric
 import Test.Generic as Test.Generic

@@ -1,4 +1,4 @@
-module JSON
+module Yoga.JSON
   ( E
   , readJSON
   , readJSON'
@@ -115,14 +115,6 @@ read ∷
   Foreign →
   E a
 read = runExcept <<< readImpl
-
--- | Read a value of any type as Foreign to a type
-readAsForeign ∷
-  ∀ a b.
-  ReadForeign a ⇒
-  b →
-  E a
-readAsForeign = read <<< unsafeToForeign
 
 read' ∷
   ∀ a.

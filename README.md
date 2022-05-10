@@ -1,4 +1,4 @@
-# 🐏👑 purescript-json
+# 🐏👑 purescript-yoga-json
 
 **Note**: This is a fork [simple-json](https://github.com/justinwoo/purescript-simple-json) ([MIT Licence](./LICENSE/simple-json.LICENSE)).
 
@@ -11,4 +11,4 @@
 
 ## Migrate from `purescript-simple-json`
 
-`purescript-json` is a drop-in replacement for `purescript-simple-json`. Just change the imports from `Simple.JSON` to `JSON`.
+`purescript-yoga-json` is a drop-in replacement for `purescript-simple-json`. Just change the imports from `Simple.JSON` to `Yoga.JSON`.

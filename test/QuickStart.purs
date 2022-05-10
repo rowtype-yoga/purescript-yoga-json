@@ -9,7 +9,7 @@ import Data.Nullable (Nullable, toNullable)
 import Effect (Effect)
 import Effect.Class.Console (log)
 import Foreign (ForeignError(..))
-import JSON as JSON
+import Yoga.JSON as JSON
 import Test.Assert (assertEqual)
 
 type MyRecordAlias =

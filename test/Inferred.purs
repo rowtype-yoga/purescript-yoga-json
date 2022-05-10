@@ -9,7 +9,7 @@ import Effect (Effect)
 import Foreign (Foreign)
 import Foreign as Foreign
 import Record as Record
-import JSON as JSON
+import Yoga.JSON as JSON
 import Test.Assert (assert)
 import Type.Prelude (Proxy(..))
 

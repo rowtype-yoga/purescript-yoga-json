@@ -1,6 +1,6 @@
 { name = "json"
 , license = "MIT"
-, repository = "https://github.com/rowtype-yoga/purescript-json.git"
+, repository = "https://github.com/rowtype-yoga/purescript-yoga-json.git"
 , dependencies =
   [ "arrays"
   , "bifunctors"
