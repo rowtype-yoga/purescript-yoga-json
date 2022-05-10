@@ -1,4 +1,5 @@
 { name = "purescript-json"
+, license = "MIT"
 , dependencies =
   [ "arrays"
   , "bifunctors"
