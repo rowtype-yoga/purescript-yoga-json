@@ -1,28 +1,39 @@
 {
-  "name": "purescript-json",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/rowtype-yoga/purescript-json.git"
-  },
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "output"
-  ],
-  "dependencies": {
-    "purescript-prelude": "^6.0.0",
-    "purescript-typelevel-prelude": "^7.0.0",
-    "purescript-record": "^4.0.0",
-    "purescript-variant": "^8.0.0",
-    "purescript-nullable": "^6.0.0",
-    "purescript-foreign-object": "^4.0.0",
-    "purescript-foreign": "^7.0.0",
-    "purescript-exceptions": "^6.0.0",
-    "purescript-arrays": "^7.0.0"
-  },
-  "devDependencies": {
-    "purescript-assert": "^6.0.0"
-  }
+    "name": "purescript-json",
+    "license": [
+        "MIT"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/rowtype-yoga/purescript-json.git"
+    },
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "output"
+    ],
+    "dependencies": {
+        "purescript-arrays": "^v7.0.0",
+        "purescript-bifunctors": "^v6.0.0",
+        "purescript-console": "^v6.0.0",
+        "purescript-control": "^v6.0.0",
+        "purescript-effect": "^v4.0.0",
+        "purescript-either": "^v6.0.0",
+        "purescript-exceptions": "^v6.0.0",
+        "purescript-foldable-traversable": "^v6.0.0",
+        "purescript-foreign": "^v7.0.0",
+        "purescript-foreign-object": "^v4.0.0",
+        "purescript-identity": "^v6.0.0",
+        "purescript-lists": "^v7.0.0",
+        "purescript-maybe": "^v6.0.0",
+        "purescript-nonempty": "^v7.0.0",
+        "purescript-nullable": "^v6.0.0",
+        "purescript-partial": "^v4.0.0",
+        "purescript-prelude": "^v6.0.0",
+        "purescript-record": "^v4.0.0",
+        "purescript-transformers": "^v6.0.0",
+        "purescript-typelevel-prelude": "^v7.0.0",
+        "purescript-variant": "^v8.0.0"
+    }
 }
