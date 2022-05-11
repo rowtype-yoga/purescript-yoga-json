@@ -18,6 +18,9 @@ module Yoga.JSON
   , getFields
   , class ReadForeignVariant
   , readVariantImpl
+  , class ReadTuple
+  , readTupleImpl
+  , tupleSize
 
   , class WriteForeign
   , writeImpl
@@ -31,17 +34,20 @@ module Yoga.JSON
 import Prelude
 
 import Control.Alt ((<|>))
-import Control.Monad.Except (ExceptT(..), except, runExcept, runExceptT, withExcept)
+import Control.Apply (lift2)
+import Control.Monad.Except (ExceptT(..), except, runExcept, runExceptT, throwError, withExcept)
+import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..), hush, note)
 import Data.Identity (Identity(..))
 import Data.List.NonEmpty (singleton)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Data.Traversable (sequence, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
+import Data.Tuple (Tuple(..))
 import Data.Variant (Variant, inj, on)
 import Effect.Exception (message, try)
 import Effect.Uncurried as EU
@@ -153,37 +159,35 @@ undefined = _undefined
 class ReadForeign a where
   readImpl ∷ Foreign → F a
 
-instance readForeign ∷ ReadForeign Foreign where
+instance ReadForeign Foreign where
   readImpl = pure
 
-instance readChar ∷ ReadForeign Char where
+instance ReadForeign Char where
   readImpl = readChar
 
-instance readNumber ∷ ReadForeign Number where
+instance ReadForeign Number where
   readImpl = readNumber
 
-instance readInt ∷ ReadForeign Int where
+instance ReadForeign Int where
   readImpl = readInt
 
-instance readString ∷ ReadForeign String where
+instance ReadForeign String where
   readImpl = readString
 
-instance readBoolean ∷ ReadForeign Boolean where
+instance ReadForeign Boolean where
   readImpl = readBoolean
 
-instance readArray ∷ ReadForeign a ⇒ ReadForeign (Array a) where
+instance ReadForeign a ⇒ ReadForeign (Array a) where
   readImpl = traverseWithIndex readAtIdx <=< readArray
-    where
-    readAtIdx i f = withExcept (map (ErrorAtIndex i)) (readImpl f)
 
-instance readMaybe ∷ ReadForeign a ⇒ ReadForeign (Maybe a) where
+instance ReadForeign a ⇒ ReadForeign (Maybe a) where
   readImpl = readNullOrUndefined readImpl
     where
     readNullOrUndefined _ value | isNull value || isUndefined value = pure
       Nothing
     readNullOrUndefined f value = Just <$> f value
 
-instance readNullable ∷ ReadForeign a ⇒ ReadForeign (Nullable a) where
+instance ReadForeign a ⇒ ReadForeign (Nullable a) where
   readImpl o = withExcept (map reformat) $
     map toNullable <$> traverse readImpl =<< readNull o
     where
@@ -191,7 +195,7 @@ instance readNullable ∷ ReadForeign a ⇒ ReadForeign (Nullable a) where
       TypeMismatch inner other → TypeMismatch ("Nullable " <> inner) other
       _ → error
 
-instance readObject ∷ ReadForeign a ⇒ ReadForeign (Object.Object a) where
+instance ReadForeign a ⇒ ReadForeign (Object.Object a) where
   readImpl = sequence <<< Object.mapWithKey (const readImpl) <=< readObject'
     where
     readObject' ∷ Foreign → F (Object Foreign)
@@ -199,7 +203,50 @@ instance readObject ∷ ReadForeign a ⇒ ReadForeign (Object.Object a) where
       | tagOf value == "Object" = pure $ unsafeFromForeign value
       | otherwise = fail $ TypeMismatch "Object" (tagOf value)
 
-instance readRecord ∷
+instance ReadTuple (Tuple a b) ⇒ ReadForeign (Tuple a b) where
+  readImpl = readTupleImpl 0
+
+-- | A class for reading JSON arrays of lenth `n` as nested tuples of size `n`
+class ReadTuple a where
+  readTupleImpl ∷ Int → Foreign → F a
+  tupleSize ∷ Proxy a → Int
+
+instance
+  ( ReadForeign a
+  , ReadTuple (Tuple b c)
+  ) ⇒
+  ReadTuple (Tuple a (Tuple b c)) where
+  readTupleImpl n =
+    readImpl
+      >=> case _ of
+        arr → case Array.uncons arr of
+          Just { head, tail } →
+            lift2 Tuple
+              (readAtIdx n head)
+              (readTupleImpl (n + 1) $ writeImpl tail)
+          _ → throwError $ pure $ TypeMismatch
+            ( "array of length " <> show
+                (1 + n + tupleSize (Proxy ∷ Proxy (Tuple b c)))
+            )
+            ("array of length " <> show n)
+  tupleSize _ = 1 + tupleSize (Proxy ∷ Proxy (Tuple b c))
+else instance readTupleHelper ∷
+  ( ReadForeign a
+  , ReadForeign b
+  ) ⇒
+  ReadTuple (Tuple a b) where
+  readTupleImpl n =
+    readImpl
+      >=> case _ of
+        [ a, b ] →
+          lift2 Tuple (readAtIdx n a) (readAtIdx (n + 1) b)
+        arr → throwError $ pure $ TypeMismatch
+          ("array of length " <> show (n + 2))
+          ("array of length " <> show (n + Array.length arr))
+
+  tupleSize = const 2
+
+instance
   ( RowToList fields fieldList
   , ReadForeignFields fieldList () fields
   ) ⇒
@@ -217,7 +264,7 @@ class
     Foreign →
     F (Builder (Record from) (Record to))
 
-instance readFieldsCons ∷
+instance
   ( IsSymbol name
   , ReadForeign ty
   , ReadForeignFields tail from from'
@@ -236,6 +283,9 @@ instance readFieldsCons ∷
     name = reflectSymbol nameP
     withExcept' = withExcept <<< map $ ErrorAtProperty name
 
+readAtIdx ∷ ∀ a. ReadForeign a ⇒ Int → Foreign → F a
+readAtIdx i f = withExcept (map (ErrorAtIndex i)) (readImpl f)
+
 exceptTApply ∷
   ∀ a b e m.
   Semigroup e ⇒
@@ -253,12 +303,12 @@ applyEither (Left e1) (Left e2) = Left (e1 <> e2)
 applyEither (Right _) (Left e) = Left e
 applyEither (Right fun) (Right a) = Right (fun a)
 
-instance readFieldsNil ∷
+instance
   ReadForeignFields Nil () () where
   getFields _ _ =
     pure identity
 
-instance readForeignVariant ∷
+instance
   ( RowToList variants rl
   , ReadForeignVariant rl variants
   ) ⇒
@@ -273,12 +323,12 @@ class
     Foreign →
     F (Variant row)
 
-instance readVariantNil ∷
+instance
   ReadForeignVariant Nil trash where
   readVariantImpl _ _ = fail $ ForeignError
     "Unable to match any variant member."
 
-instance readVariantCons ∷
+instance
   ( IsSymbol name
   , ReadForeign ty
   , Row.Cons name ty trash row
@@ -332,6 +382,20 @@ instance WriteForeign a ⇒ WriteForeign (Nullable a) where
 
 instance WriteForeign a ⇒ WriteForeign (Object.Object a) where
   writeImpl = unsafeToForeign <<< Object.mapWithKey (const writeImpl)
+
+instance
+  ( WriteForeign a
+  , WriteForeign (Tuple b c)
+  ) ⇒
+  WriteForeign (Tuple a (Tuple b c)) where
+  writeImpl (Tuple a bc) =
+    writeImpl bc
+      # read_
+      # fromMaybe []
+      # Array.cons (writeImpl a)
+      # writeImpl
+else instance (WriteForeign a, WriteForeign b) ⇒ WriteForeign (Tuple a b) where
+  writeImpl (Tuple a b) = writeImpl [ writeImpl a, writeImpl b ]
 
 instance
   ( RowToList row rl

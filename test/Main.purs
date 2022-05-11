@@ -2,7 +2,7 @@ module Test.Main where
 
 import Prelude
 
-import Data.Either (Either(..), either, isRight)
+import Data.Either (Either(..), either, fromLeft, isRight)
 import Data.List (List(..), (:))
 import Data.List.NonEmpty (NonEmptyList(..))
 import Data.Maybe (Maybe)
@@ -14,13 +14,14 @@ import Effect (Effect)
 import Effect.Exception (throw)
 import Foreign (ForeignError(..), MultipleErrors)
 import Foreign.Object (Object)
-import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON)
+import Partial.Unsafe (unsafePartial)
 import Test.Assert (assertEqual)
 import Test.EnumSumGeneric as Test.EnumSumGeneric
 import Test.Generic as Test.Generic
 import Test.Inferred as Test.Inferred
 import Test.Quickstart as Test.Quickstart
 import Type.Proxy (Proxy(..))
+import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON)
 
 type E a = Either MultipleErrors a
 
@@ -72,7 +73,7 @@ type MyTestVariant = Variant
   )
 
 type MyTestTuple =
-  Int /\ String /\ Boolean /\ Char /\ Array Int
+  Int /\ String /\ Boolean /\ Char /\ Array (Int /\ String)
 
 
 roundtrips :: forall a. ReadForeign a => WriteForeign a => Proxy a -> String -> Effect Unit
@@ -134,39 +135,29 @@ main = do
     )
   (isRight (r3 ∷ E MyTestNullable)) `shouldEqual` false
 
-  let r4 = readJSON """
-    [ 1, "test", 1, "a", [ 1 ] ]
-  """
-  (unsafePartial $ fromLeft r4) `shouldEqual`
-    (NonEmptyList (NonEmpty (ErrorAtIndex 2 (TypeMismatch "Boolean" "Number")) Nil))
+  let r4 = readJSON """[ 1, "test", 1, "a", [ 1 ] ]"""
+  r4 `shouldEqual`
+     (Left (NonEmptyList (NonEmpty (ErrorAtIndex 2 (TypeMismatch "Boolean" "Number")) Nil)))
   isRight (r4 :: E MyTestTuple) `shouldEqual` false
 
-  let r5 = readJSON """
-    [ 1, "test", true, "a", [ 1 ], null ]
-  """
-  (unsafePartial $ fromLeft r5) `shouldEqual`
-    (NonEmptyList (NonEmpty (TypeMismatch "array of length 5" "array of length 6") Nil))
+  let r5 = readJSON """ [ 1, "test", true, "a", [ 1 ], null ] """
+  r5 `shouldEqual`
+    (Left (NonEmptyList (NonEmpty (TypeMismatch "array of length 5" "array of length 6") Nil)))
   isRight (r5 :: E MyTestTuple) `shouldEqual` false
 
-  let r6 = readJSON """
-    [ 1, "test", true, "a" ]
-  """
-  (unsafePartial $ fromLeft r6) `shouldEqual`
-    (NonEmptyList (NonEmpty (TypeMismatch "array of length 5" "array of length 4") Nil))
+  let r6 = readJSON """ [ 1, "test", true, "a" ] """
+  r6 `shouldEqual`
+    (Left(NonEmptyList (NonEmpty (TypeMismatch "array of length 5" "array of length 4") Nil)))
   isRight (r6 :: E MyTestTuple) `shouldEqual` false
 
-  let r7 = readJSON """
-    [ 1 ]
-  """
-  (unsafePartial $ fromLeft r7) `shouldEqual`
-    (NonEmptyList (NonEmpty (TypeMismatch "array of length 5" "array of length 1") Nil))
+  let r7 = readJSON """ [ 1 ] """
+  r7 `shouldEqual`
+    (Left(NonEmptyList (NonEmpty (TypeMismatch "array of length 5" "array of length 1") Nil)))
   isRight (r7 :: E MyTestTuple) `shouldEqual` false
 
-  let r8 = readJSON """
-    []
-  """
-  (unsafePartial $ fromLeft r8) `shouldEqual`
-    (NonEmptyList (NonEmpty (TypeMismatch "array of length 5" "array of length 0") Nil))
+  let r8 = readJSON """ [] """
+  r8 `shouldEqual`
+    (Left (NonEmptyList (NonEmpty (TypeMismatch "array of length 5" "array of length 0") Nil)))
   isRight (r8 :: E MyTestTuple) `shouldEqual` false
 
   -- roundtrips
@@ -213,7 +204,7 @@ main = do
   """
 
   roundtrips (Proxy :: Proxy MyTestTuple) """
-    [ 1, "test", true, "a", [ 1 ] ]
+    [ 1, "test", true, "a", [ [1, "heinz"], [893, "dembowski"] ] ]
   """
 
   -- run examples

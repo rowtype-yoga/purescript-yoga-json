@@ -21,6 +21,7 @@
   , "prelude"
   , "record"
   , "transformers"
+  , "tuples"
   , "typelevel-prelude"
   , "variant"
   ]
