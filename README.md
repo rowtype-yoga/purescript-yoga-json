@@ -12,3 +12,7 @@
 ## Migrate from `purescript-simple-json`
 
 `purescript-yoga-json` is a drop-in replacement for `purescript-simple-json`. Just change the imports from `Simple.JSON` to `Yoga.JSON`.
+
+## Differences to `simple-json`
+
+There is an inbuilt codec for `Tuple`s thanks to @ursi
