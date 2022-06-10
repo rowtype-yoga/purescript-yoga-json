@@ -16,3 +16,6 @@
 ## Differences to `simple-json`
 
 There is an inbuilt codec for `Tuple`s thanks to @ursi
+
+It includes @justinwoo's codecs for en- and decoding generics
+from [simple-json-generics](https://github.com/justinwoo/purescript-simple-json-generics)

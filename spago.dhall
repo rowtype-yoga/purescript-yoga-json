@@ -4,7 +4,6 @@
 , dependencies =
   [ "arrays"
   , "bifunctors"
-  , "console"
   , "control"
   , "effect"
   , "either"
@@ -15,7 +14,6 @@
   , "identity"
   , "lists"
   , "maybe"
-  , "nonempty"
   , "nullable"
   , "partial"
   , "prelude"
