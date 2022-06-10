@@ -5,5 +5,7 @@ in      conf
         , dependencies =
               conf.dependencies
             # [ "assert"
+              , "console"
+              , "nonempty"
               ]
         }

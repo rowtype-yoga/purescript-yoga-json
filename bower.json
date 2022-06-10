@@ -16,7 +16,6 @@
     "dependencies": {
         "purescript-arrays": "^v7.0.0",
         "purescript-bifunctors": "^v6.0.0",
-        "purescript-console": "^v6.0.0",
         "purescript-control": "^v6.0.0",
         "purescript-effect": "^v4.0.0",
         "purescript-either": "^v6.0.0",
@@ -27,12 +26,12 @@
         "purescript-identity": "^v6.0.0",
         "purescript-lists": "^v7.0.0",
         "purescript-maybe": "^v6.0.0",
-        "purescript-nonempty": "^v7.0.0",
         "purescript-nullable": "^v6.0.0",
         "purescript-partial": "^v4.0.0",
         "purescript-prelude": "^v6.0.0",
         "purescript-record": "^v4.0.0",
         "purescript-transformers": "^v6.0.0",
+        "purescript-tuples": "^v7.0.0",
         "purescript-typelevel-prelude": "^v7.0.0",
         "purescript-variant": "^v8.0.0"
     }
