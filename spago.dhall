@@ -14,6 +14,7 @@
   , "identity"
   , "lists"
   , "maybe"
+  , "newtype"
   , "nullable"
   , "partial"
   , "prelude"
