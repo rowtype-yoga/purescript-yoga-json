@@ -4,8 +4,12 @@ in      conf
     //  { sources = conf.sources # [ "test/**/*.purs" ]
         , dependencies =
               conf.dependencies
-            # [ "assert"
+            # [ "spec"
+              , "spec-discovery"
               , "console"
               , "nonempty"
+              , "aff"
+              , "strings-extra"
+              , "newtype"
               ]
         }

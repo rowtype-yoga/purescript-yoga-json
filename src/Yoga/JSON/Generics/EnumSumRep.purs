@@ -9,30 +9,37 @@ import Foreign as Foreign
 import Yoga.JSON as JSON
 import Type.Prelude (class IsSymbol, Proxy(..), reflectSymbol)
 
-enumSumRep
+readGenericEnum
   :: forall a rep
    . GR.Generic a rep
   => GenericEnumSumRep rep
   => Foreign
   -> Foreign.F a
-enumSumRep f =
+readGenericEnum f =
   GR.to <$> genericEnumReadForeign f
+
+writeGenericEnum
+  :: forall a rep
+   . GR.Generic a rep
+  => GenericEnumSumRep rep
+  => a
+  -> Foreign
+writeGenericEnum a = genericEnumWriteForeign (GR.from a)
 
 -- | Generic Enum Sum Representations, with constructor names as strings
 class GenericEnumSumRep rep where
   genericEnumReadForeign :: Foreign -> Foreign.F rep
+  genericEnumWriteForeign :: rep -> Foreign
 
-instance sumEnumSumRep ::
-  ( GenericEnumSumRep a
-  , GenericEnumSumRep b
-  ) =>
+instance ( GenericEnumSumRep a , GenericEnumSumRep b) =>
   GenericEnumSumRep (GR.Sum a b) where
   genericEnumReadForeign f = GR.Inl <$> genericEnumReadForeign f
     <|> GR.Inr <$> genericEnumReadForeign f
+  genericEnumWriteForeign = case _ of
+   (GR.Inl a) -> genericEnumWriteForeign a
+   (GR.Inr a) -> genericEnumWriteForeign a
 
-instance constructorEnumSumRep ::
-  ( IsSymbol name
-  ) =>
+instance (IsSymbol name) =>
   GenericEnumSumRep (GR.Constructor name GR.NoArguments) where
   genericEnumReadForeign f = do
     s <- JSON.readImpl f
@@ -41,3 +48,5 @@ instance constructorEnumSumRep ::
       "Enum string " <> s <> " did not match expected string " <> name
     where
     name = reflectSymbol (Proxy :: Proxy name)
+  genericEnumWriteForeign (GR.Constructor GR.NoArguments) =
+    JSON.writeImpl $ reflectSymbol (Proxy :: Proxy name)

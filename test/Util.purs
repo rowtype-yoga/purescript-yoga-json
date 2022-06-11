@@ -2,35 +2,25 @@ module Test.Util where
 
 import Prelude
 
-import Prim.Row as Row
-import Prim.RowList (class RowToList, Cons, Nil, RowList)
-import Record (get)
-import Type.Prelude (class IsSymbol, Proxy(..))
+import Data.Either (Either(..))
+import Data.Semigroup.Foldable (intercalateMap)
+import Effect.Aff (Aff)
+import Foreign (Foreign, renderForeignError)
+import Test.Spec.Assertions (fail)
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (class ReadForeign, class WriteForeign, read, readJSON, write, writeJSON)
 
--- | Check two records of the same type for equality.
-equal ∷
-  ∀ r rs.
-  RowToList r rs ⇒
-  EqualFields rs r ⇒
-  Record r →
-  Record r →
-  Boolean
-equal a b = equalFields (Proxy ∷ Proxy rs) a b
+roundtrips ∷ ∀ a. Show a ⇒ Eq a ⇒ ReadForeign a ⇒ WriteForeign a ⇒ a → Aff Unit
+roundtrips x = do
+  x # write # shouldRead (Proxy :: _ a)
+  x # writeJSON # shouldReadJSON (Proxy :: _ a)
 
-class EqualFields (rs ∷ RowList Type) (row ∷ Row Type) | rs → row where
-  equalFields ∷ Proxy rs → Record row → Record row → Boolean
+shouldRead ∷ ∀ a. ReadForeign a ⇒ Proxy a -> Foreign → Aff Unit
+shouldRead _ = read >>> case _ of
+  Left e → fail (intercalateMap "\n" renderForeignError e)
+  Right (_ ∷ a) → pure unit
 
-instance equalFieldsCons ∷
-  ( IsSymbol name
-  , Eq ty
-  , Row.Cons name ty tailRow row
-  , EqualFields tail row
-  ) ⇒
-  EqualFields (Cons name ty tail) row where
-  equalFields _ a b = get' a == get' b && rest
-    where
-    get' = get (Proxy ∷ Proxy name)
-    rest = equalFields (Proxy ∷ Proxy tail) a b
-
-instance equalFieldsNil ∷ EqualFields Nil row where
-  equalFields _ _ _ = true
+shouldReadJSON ∷ ∀ a. ReadForeign a ⇒ Proxy a -> String → Aff Unit
+shouldReadJSON _ = readJSON >>> case _ of
+  Left e → fail (intercalateMap "\n" renderForeignError e)
+  Right (_ ∷ a) → pure unit

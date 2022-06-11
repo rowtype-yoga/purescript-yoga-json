@@ -8,6 +8,15 @@
 
 ## Usage
 
+```purescript
+import Yoga.JSON as JSON
+
+serialised :: String
+serialised =
+  JSON.writeJSON { first_name: "Lola", last_name: "Flores" }
+```
+
+Check out the tests for how to encode/decode increasingly complex types.
 
 ## Migrate from `purescript-simple-json`
 
@@ -17,5 +26,5 @@
 
 There is an inbuilt codec for `Tuple`s thanks to @ursi
 
-It includes @justinwoo's codecs for en- and decoding generics
-from [simple-json-generics](https://github.com/justinwoo/purescript-simple-json-generics)
+It includes @justinwoo's codecs for en- and decoding generics inspired by
+[simple-json-generics](https://github.com/justinwoo/purescript-simple-json-generics)
