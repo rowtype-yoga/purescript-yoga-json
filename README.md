@@ -28,3 +28,17 @@ There is an inbuilt codec for `Tuple`s thanks to @ursi
 
 It includes @justinwoo's codecs for en- and decoding generics inspired by
 [simple-json-generics](https://github.com/justinwoo/purescript-simple-json-generics)
+
+### 💣 The Variant Codec is different
+If you want to emulate `simple-json`'s format you may use the newtype  `TaggedVariant`
+
+```purescript
+type YourVariantRow = ( a :: Int, b :: String )
+type YourVariant = Variant YourVariantRow
+x :: YourVariant
+x = inj (Proxy :: Proxy "a") 5
+-- encoded = writeJSON x
+-- ^ Let's say you had this before
+-- You can now do:
+encoded = writeJSON (TaggedVariant "type" "value" x)
+```
