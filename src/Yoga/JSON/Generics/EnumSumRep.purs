@@ -9,22 +9,22 @@ import Foreign as Foreign
 import Yoga.JSON as JSON
 import Type.Prelude (class IsSymbol, Proxy(..), reflectSymbol)
 
-readGenericEnum
+genericReadForeignEnum
   :: forall a rep
    . GR.Generic a rep
   => GenericEnumSumRep rep
   => Foreign
   -> Foreign.F a
-readGenericEnum f =
+genericReadForeignEnum f =
   GR.to <$> genericEnumReadForeign f
 
-writeGenericEnum
+genericWriteForeignEnum
   :: forall a rep
    . GR.Generic a rep
   => GenericEnumSumRep rep
   => a
   -> Foreign
-writeGenericEnum a = genericEnumWriteForeign (GR.from a)
+genericWriteForeignEnum a = genericEnumWriteForeign (GR.from a)
 
 -- | Generic Enum Sum Representations, with constructor names as strings
 class GenericEnumSumRep rep where

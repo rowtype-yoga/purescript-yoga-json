@@ -9,12 +9,12 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Util (roundtrips)
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeJSON)
-import Yoga.JSON.Generics (readGenericTaggedSum, writeGenericTaggedSum)
+import Yoga.JSON.Generics (genericReadForeignTaggedSum, genericWriteForeignTaggedSum)
 import Yoga.JSON.Generics as GenericTaggedSum
-import Yoga.JSON.Generics.EnumSumRep (readGenericEnum, writeGenericEnum)
+import Yoga.JSON.Generics.EnumSumRep (genericReadForeignEnum, genericWriteForeignEnum)
 import Yoga.JSON.Generics.TaggedSumRep (defaultOptions)
-import Yoga.JSON.Generics.UntaggedProductRep (readGenericUntaggedProduct, writeGenericUntaggedProduct)
-import Yoga.JSON.Generics.UntaggedSumRep (readGenericUntaggedSum, writeGenericUntaggedSum)
+import Yoga.JSON.Generics.UntaggedProductRep (genericReadForeignUntaggedProduct, genericWriteForeignUntaggedProduct)
+import Yoga.JSON.Generics.UntaggedSumRep (genericReadForeignUntaggedSum, genericWriteForeignUntaggedSum)
 
 spec ∷ Spec Unit
 spec = describe "Generics" $ do
@@ -61,31 +61,31 @@ derive instance Eq HalfEnum
 instance Show HalfEnum where show = genericShow
 halfEnumOptions :: GenericTaggedSum.Options
 halfEnumOptions = { typeTag: "kind", valueTag: "data", toConstructorName: snakeCase }
-instance ReadForeign HalfEnum where readImpl = readGenericTaggedSum halfEnumOptions
-instance WriteForeign HalfEnum where writeImpl = writeGenericTaggedSum halfEnumOptions
+instance ReadForeign HalfEnum where readImpl = genericReadForeignTaggedSum halfEnumOptions
+instance WriteForeign HalfEnum where writeImpl = genericWriteForeignTaggedSum halfEnumOptions
 
 data MyEnum = Enum1 | Enum2 | Enum3
 derive instance Generic MyEnum _
 derive instance Eq MyEnum
 instance Show MyEnum where show = genericShow
-instance ReadForeign MyEnum where readImpl = readGenericEnum
-instance WriteForeign MyEnum where writeImpl = writeGenericEnum
+instance ReadForeign MyEnum where readImpl = genericReadForeignEnum
+instance WriteForeign MyEnum where writeImpl = genericWriteForeignEnum
 
 data IntOrString = AnInt Int | AString String
 
 derive instance Generic IntOrString _
 derive instance Eq IntOrString
 instance Show IntOrString where show = genericShow
-instance ReadForeign IntOrString where readImpl = readGenericUntaggedSum
-instance WriteForeign IntOrString where writeImpl = writeGenericUntaggedSum
+instance ReadForeign IntOrString where readImpl = genericReadForeignUntaggedSum
+instance WriteForeign IntOrString where writeImpl = genericWriteForeignUntaggedSum
 
 data DoubleTrouble = IntAndString Int String
 
 derive instance Generic DoubleTrouble _
 derive instance Eq DoubleTrouble
 instance Show DoubleTrouble where show = genericShow
-instance ReadForeign DoubleTrouble where readImpl = readGenericUntaggedProduct
-instance WriteForeign DoubleTrouble where writeImpl = writeGenericUntaggedProduct
+instance ReadForeign DoubleTrouble where readImpl = genericReadForeignUntaggedProduct
+instance WriteForeign DoubleTrouble where writeImpl = genericWriteForeignUntaggedProduct
 
 data IntOrStringTagged = ATaggedInt Int | ATaggedString String
 
@@ -93,6 +93,6 @@ derive instance Generic IntOrStringTagged _
 derive instance Eq IntOrStringTagged
 instance Show IntOrStringTagged where show = genericShow
 instance ReadForeign IntOrStringTagged where
-  readImpl = readGenericTaggedSum defaultOptions
+  readImpl = genericReadForeignTaggedSum defaultOptions
 instance WriteForeign IntOrStringTagged where
-  writeImpl = writeGenericTaggedSum defaultOptions
+  writeImpl = genericWriteForeignTaggedSum defaultOptions
