@@ -3,20 +3,24 @@ module Test.BasicsSpec where
 import Prelude
 
 import Data.Array.NonEmpty as NEA
+import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Data.List as List
 import Data.List.Lazy as LazyList
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype)
+import Data.Newtype (class Newtype, un)
 import Data.Nullable as Nullable
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (Variant, inj)
+import Debug (spy)
 import Foreign.Object as Object
-import Test.Spec (Spec, describe, it)
+import Test.Spec (Spec, describe, it, itOnly)
+import Test.Spec.Assertions (shouldEqual)
 import Test.Util (roundtrips)
 import Type.Proxy (Proxy(..))
-import Yoga.JSON (class ReadForeign, class WriteForeign)
+import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, readJSON_, writeJSON)
+import Yoga.JSON.Variant (TaggedVariant(..), UntaggedVariant(..))
 
 spec :: Spec Unit
 spec = describe "En- and decoding" $ do
@@ -53,8 +57,37 @@ spec = describe "En- and decoding" $ do
 
   describe "works on variant types" do
     it "roundtrips" do
-      roundtrips (inj (Proxy :: Proxy "erwin") "e" :: Variant ("erwin" :: String))
-      roundtrips (inj (Proxy :: Proxy "jackie") "j" :: Variant ("erwin" :: String, "jackie" :: String))
+      roundtrips (inj (Proxy :: _ "erwin") "e" :: Variant ("erwin" :: String))
+      roundtrips (inj (Proxy :: _ "jackie") 7 :: Variant ExampleVariant)
+
+  describe "works on tagged variant types" do
+    it "roundtrips" do
+      roundtrips (TaggedVariant (erwin "e") :: TaggedVariant "super" "hans" (Erwin ()))
+      let bareVariant = erwin "e"
+      let res = writeJSON (TaggedVariant bareVariant :: TaggedVariant "type" "value" ExampleVariant)
+      let expected = """{"value":"e","type":"erwin"}"""
+      res `shouldEqual` expected
+      let
+        parsed :: _ (TaggedVariant "type" "value" ExampleVariant)
+        parsed = readJSON expected
+      (un TaggedVariant <$> parsed) `shouldEqual` Right bareVariant
+
+  describe "works on untagged variant types" do
+    it "roundtrips" do
+      roundtrips (UntaggedVariant (erwin "e") :: UntaggedVariant (Erwin ()))
+      let bareVariant = erwin "e"
+      let res = writeJSON (UntaggedVariant bareVariant :: UntaggedVariant ExampleVariant)
+      let expected = """"e""""
+      res `shouldEqual` expected
+      let
+        parsed :: _ (UntaggedVariant ExampleVariant)
+        parsed = readJSON expected
+      (un UntaggedVariant <$> parsed) `shouldEqual` Right bareVariant
+
+type ExampleVariant = ("erwin" :: String, "jackie" :: Int)
+type ExampleTaggedVariant t v = TaggedVariant t v ExampleVariant
+erwin = inj (Proxy :: Proxy "erwin")
+type Erwin r = (erwin :: String | r)
 
 newtype Stringy = Stringy String
 derive instance Newtype Stringy _

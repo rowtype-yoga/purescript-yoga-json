@@ -11,5 +11,6 @@ in      conf
               , "aff"
               , "strings-extra"
               , "newtype"
+              , "debug"
               ]
         }
