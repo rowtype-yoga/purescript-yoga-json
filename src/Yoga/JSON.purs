@@ -35,11 +35,11 @@ import Prelude
 
 import Control.Alt ((<|>))
 import Control.Apply (lift2)
-import Control.Monad.Except (ExceptT(..), except, runExcept, runExceptT, throwError, withExcept)
+import Control.Monad.Except (ExceptT(..), except, runExcept, throwError, withExcept)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
-import Data.Either (Either(..), hush, note)
+import Data.Either (Either, hush, note)
 import Data.Identity (Identity(..))
 import Data.List.NonEmpty (singleton)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
@@ -272,36 +272,19 @@ instance
   , Row.Cons name ty from' to
   ) ⇒
   ReadForeignFields (Cons name ty tail) from to where
-  getFields _ obj = (compose <$> first) `exceptTApply` rest
+  getFields _ obj = do
+    compose <$> first <*> rest
     where
-    first = do
-      value ← withExcept' (readImpl =<< readProp name obj)
-      pure $ Builder.insert nameP value
+    value = withExcept' (readImpl =<< readProp name obj)
+    first = Builder.insert nameP <$> value
     rest = getFields tailP obj
     nameP = Proxy ∷ Proxy name
     tailP = Proxy ∷ Proxy tail
     name = reflectSymbol nameP
-    withExcept' = withExcept <<< map $ ErrorAtProperty name
+    withExcept' = (withExcept <<< map) (ErrorAtProperty name)
 
 readAtIdx ∷ ∀ a. ReadForeign a ⇒ Int → Foreign → F a
 readAtIdx i f = withExcept (map (ErrorAtIndex i)) (readImpl f)
-
-exceptTApply ∷
-  ∀ a b e m.
-  Semigroup e ⇒
-  Applicative m ⇒
-  ExceptT e m (a → b) →
-  ExceptT e m a →
-  ExceptT e m b
-exceptTApply fun a = ExceptT $ applyEither
-  <$> runExceptT fun
-  <*> runExceptT a
-
-applyEither ∷ ∀ e a b. Semigroup e ⇒ Either e (a → b) → Either e a → Either e b
-applyEither (Left e) (Right _) = Left e
-applyEither (Left e1) (Left e2) = Left (e1 <> e2)
-applyEither (Right _) (Left e) = Left e
-applyEither (Right fun) (Right a) = Right (fun a)
 
 instance
   ReadForeignFields Nil () () where
@@ -324,29 +307,23 @@ class
     F (Variant row)
 
 instance
-  ReadForeignVariant Nil trash where
-  readVariantImpl _ _ = fail $ ForeignError
-    "Unable to match any variant member."
-
-instance
   ( IsSymbol name
   , ReadForeign ty
   , Row.Cons name ty trash row
   , ReadForeignVariant tail row
   ) ⇒
   ReadForeignVariant (Cons name ty tail) row where
-  readVariantImpl _ o =
-    do
-      obj ∷ { type ∷ String, value ∷ Foreign } ← readImpl o
-      if obj.type == name then do
-        value ∷ ty ← readImpl obj.value
-        pure $ inj namep value
-      else
-        (fail <<< ForeignError $ "Did not match variant tag " <> name)
-      <|> readVariantImpl (Proxy ∷ Proxy tail) o
+  readVariantImpl _ o = readVariantImpl (Proxy :: Proxy tail) o <|> ado
+    value :: ty <- readProp name o >>= readImpl
+    in inj namep value
     where
     namep = Proxy ∷ Proxy name
     name = reflectSymbol namep
+
+instance
+  ReadForeignVariant Nil trash where
+  readVariantImpl _ _ = fail $ ForeignError
+    "Unable to match any variant member."
 
 -- -- | A class for writing a value into JSON
 -- -- | need to do this intelligently using Foreign probably, because of null and undefined whatever
@@ -449,7 +426,7 @@ instance
   WriteForeignVariant Nil () where
   writeVariantImpl _ _ =
     -- a PureScript-defined variant cannot reach this path, but a JavaScript FFI one could.
-    unsafeCrashWith "Variant was not able to be writen row WriteForeign."
+    unsafeCrashWith "Attempted to write empty variant."
 
 instance
   ( IsSymbol name
@@ -466,10 +443,8 @@ instance
       variant
     where
     namep = Proxy ∷ Proxy name
-    writeVariant value = unsafeToForeign
-      { type: reflectSymbol namep
-      , value: writeImpl value
-      }
+    name = reflectSymbol namep
+    writeVariant value = writeImpl $ Object.singleton name (writeImpl value)
 
 instance ReadForeign a ⇒ ReadForeign (NonEmptyArray a) where
   readImpl f = do
