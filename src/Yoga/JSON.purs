@@ -40,12 +40,14 @@ import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
 import Data.Either (Either, hush, note)
+import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Identity (Identity(..))
+import Data.Int as Int
 import Data.List.NonEmpty (singleton)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import Data.Newtype (class Newtype)
+import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', maybe)
+import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Data.Traversable (sequence, traverse)
@@ -461,20 +463,25 @@ instance ReadForeign a ⇒ ReadForeign (NonEmptyArray a) where
 instance writeForeignNEArray ∷ WriteForeign a ⇒ WriteForeign (NonEmptyArray a) where
   writeImpl a = writeImpl <<< toArray $ a
 
+-- Map instances
 instance (WriteForeign a) => WriteForeign (Map String a) where
-  writeImpl = (Map.toUnfoldable :: _ -> Array _) >>> Object.fromFoldable >>> writeImpl
+  writeImpl = foldrWithIndex Object.insert Object.empty >>> writeImpl
 else
-instance (Newtype key String, WriteForeign a) => WriteForeign (Map key a) where
-  writeImpl = coerceKeysToString >>> (Map.toUnfoldable :: _ -> Array _) >>> Object.fromFoldable >>> writeImpl
-    where
-    coerceKeysToString :: Map key a -> Map String a
-    coerceKeysToString = unsafeCoerce
+instance (WriteForeign a) => WriteForeign (Map Int a) where
+  writeImpl = foldrWithIndex (show >>> Object.insert) Object.empty >>> writeImpl
+else
+instance (Newtype nt key, WriteForeign (Map key value)) => WriteForeign (Map nt value) where
+  writeImpl = (unsafeCoerce :: (_ -> Map key value )) >>> writeImpl
 
 instance (ReadForeign a) => ReadForeign (Map String a) where
-  readImpl = readImpl >>> map ((Object.toUnfoldable :: _ -> Array _) >>> Map.fromFoldable)
+  readImpl = (readImpl :: (_ -> _ (Object a))) >>> map (foldrWithIndex Map.insert Map.empty)
 else
-instance (Newtype key String, ReadForeign a) => ReadForeign (Map key a) where
-  readImpl = readImpl >>> map ((Object.toUnfoldable :: _ -> Array _) >>> Map.fromFoldable >>> coerceKeysFromString)
-    where
-    coerceKeysFromString :: Map String a -> Map key a
-    coerceKeysFromString = unsafeCoerce
+instance (ReadForeign a) => ReadForeign (Map Int a) where
+  readImpl = (readImpl :: (_ -> _ (Object a))) >>> map (foldrWithIndex (unsafeStringToInt >>> Map.insert) Map.empty)
+else
+instance (Newtype nt key, ReadForeign (Map key value)) => ReadForeign (Map nt value) where
+  readImpl = (readImpl :: (_ -> _ (Map key value))) >>> map (unsafeCoerce :: (Map key value -> Map nt value))
+
+unsafeStringToInt :: String → Int
+unsafeStringToInt = Int.fromString >>>
+  (fromMaybe' \_ -> unsafeCrashWith "impossible")

@@ -45,9 +45,12 @@ spec = describe "En- and decoding" $ do
     it "roundtrips List" $ traverse_ roundtrips (List.fromFoldable [["A", "B"],[]])
     it "roundtrips NonEmptyArray" $ roundtrips (NEA.cons' "A" ["B"])
     it "roundtrips Object" $ roundtrips (Object.fromHomogeneous { a: 12, b: 54 })
-    it "roundtrips Map" $ roundtrips (Map.fromFoldable [("A" /\ "B"),("C" /\ "D")])
+    it "roundtrips String Map" $ roundtrips (Map.fromFoldable [("A" /\ 8),("C" /\ 7)])
+    it "roundtrips Int Map" $ roundtrips (Map.fromFoldable [(4 /\ "B"),(8 /\ "D")])
     it "roundtrips Map with String newtype keys"
       $ roundtrips (Map.fromFoldable [(Stringy "A" /\ "B"),(Stringy "C" /\ "D")])
+    it "roundtrips Map with Int newtype keys"
+      $ roundtrips (Map.fromFoldable [(Inty 4 /\ "B"),(Inty 8 /\ "D")])
 
   describe "works on record types" do
     it "roundtrips" do
@@ -101,3 +104,11 @@ derive newtype instance Eq Stringy
 derive newtype instance Ord Stringy
 derive newtype instance WriteForeign Stringy
 derive newtype instance ReadForeign Stringy
+
+newtype Inty = Inty Int
+derive instance Newtype Inty _
+derive newtype instance Show Inty
+derive newtype instance Eq Inty
+derive newtype instance Ord Inty
+derive newtype instance WriteForeign Inty
+derive newtype instance ReadForeign Inty
