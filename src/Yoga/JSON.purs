@@ -42,7 +42,10 @@ import Data.Bifunctor (lmap)
 import Data.Either (Either, hush, note)
 import Data.Identity (Identity(..))
 import Data.List.NonEmpty (singleton)
+import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Data.Traversable (sequence, traverse)
@@ -63,6 +66,7 @@ import Record (get)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import Type.Prelude (Proxy(..))
+import Unsafe.Coerce (unsafeCoerce)
 
 -- | An alias for the Either result of decoding
 type E a = Either MultipleErrors a
@@ -456,3 +460,21 @@ instance ReadForeign a ⇒ ReadForeign (NonEmptyArray a) where
 
 instance writeForeignNEArray ∷ WriteForeign a ⇒ WriteForeign (NonEmptyArray a) where
   writeImpl a = writeImpl <<< toArray $ a
+
+instance (WriteForeign a) => WriteForeign (Map String a) where
+  writeImpl = (Map.toUnfoldable :: _ -> Array _) >>> Object.fromFoldable >>> writeImpl
+else
+instance (Newtype key String, WriteForeign a) => WriteForeign (Map key a) where
+  writeImpl = coerceKeysToString >>> (Map.toUnfoldable :: _ -> Array _) >>> Object.fromFoldable >>> writeImpl
+    where
+    coerceKeysToString :: Map key a -> Map String a
+    coerceKeysToString = unsafeCoerce
+
+instance (ReadForeign a) => ReadForeign (Map String a) where
+  readImpl = readImpl >>> map ((Object.toUnfoldable :: _ -> Array _) >>> Map.fromFoldable)
+else
+instance (Newtype key String, ReadForeign a) => ReadForeign (Map key a) where
+  readImpl = readImpl >>> map ((Object.toUnfoldable :: _ -> Array _) >>> Map.fromFoldable >>> coerceKeysFromString)
+    where
+    coerceKeysFromString :: Map String a -> Map key a
+    coerceKeysFromString = unsafeCoerce

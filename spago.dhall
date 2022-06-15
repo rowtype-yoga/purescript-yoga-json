@@ -16,12 +16,14 @@
   , "maybe"
   , "newtype"
   , "nullable"
+  , "ordered-collections"
   , "partial"
   , "prelude"
   , "record"
   , "transformers"
   , "tuples"
   , "typelevel-prelude"
+  , "unsafe-coerce"
   , "variant"
   ]
 , packages = ./packages.dhall

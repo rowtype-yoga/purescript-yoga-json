@@ -5,7 +5,6 @@ import Prelude
 import Data.Array as Array
 import Data.Either (blush)
 import Data.Maybe (Maybe(..))
-import Debug (spy)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Type.Proxy (Proxy(..))
@@ -34,5 +33,4 @@ spec = describe "Errors" do
 getErrorPath ∷ ∀ a. ReadForeign a ⇒ Proxy a → String → Maybe (Array String)
 getErrorPath _ x = do
   let e = (readJSON x ∷ _ a) # blush
-  let _ = spy "e" e
   (e <#> map toJSONPath <#> Array.fromFoldable)
