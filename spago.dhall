@@ -12,6 +12,7 @@
   , "foreign"
   , "foreign-object"
   , "identity"
+  , "integers"
   , "lists"
   , "maybe"
   , "newtype"
