@@ -65,6 +65,7 @@ instance ReadForeign HalfEnum where readImpl = genericReadForeignTaggedSum halfE
 instance WriteForeign HalfEnum where writeImpl = genericWriteForeignTaggedSum halfEnumOptions
 
 data MyEnum = Enum1 | Enum2 | Enum3
+
 derive instance Generic MyEnum _
 derive instance Eq MyEnum
 instance Show MyEnum where show = genericShow
@@ -72,7 +73,6 @@ instance ReadForeign MyEnum where readImpl = genericReadForeignEnum
 instance WriteForeign MyEnum where writeImpl = genericWriteForeignEnum
 
 data IntOrString = AnInt Int | AString String
-
 derive instance Generic IntOrString _
 derive instance Eq IntOrString
 instance Show IntOrString where show = genericShow

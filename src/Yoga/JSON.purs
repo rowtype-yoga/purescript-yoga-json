@@ -40,9 +40,14 @@ import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
 import Data.Either (Either, hush, note)
+import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Identity (Identity(..))
+import Data.Int as Int
 import Data.List.NonEmpty (singleton)
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', maybe)
+import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Data.Traversable (sequence, traverse)
@@ -63,6 +68,7 @@ import Record (get)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import Type.Prelude (Proxy(..))
+import Unsafe.Coerce (unsafeCoerce)
 
 -- | An alias for the Either result of decoding
 type E a = Either MultipleErrors a
@@ -456,3 +462,26 @@ instance ReadForeign a ⇒ ReadForeign (NonEmptyArray a) where
 
 instance writeForeignNEArray ∷ WriteForeign a ⇒ WriteForeign (NonEmptyArray a) where
   writeImpl a = writeImpl <<< toArray $ a
+
+-- Map instances
+instance (WriteForeign a) => WriteForeign (Map String a) where
+  writeImpl = foldrWithIndex Object.insert Object.empty >>> writeImpl
+else
+instance (WriteForeign a) => WriteForeign (Map Int a) where
+  writeImpl = foldrWithIndex (show >>> Object.insert) Object.empty >>> writeImpl
+else
+instance (Newtype nt key, WriteForeign (Map key value)) => WriteForeign (Map nt value) where
+  writeImpl = (unsafeCoerce :: (_ -> Map key value )) >>> writeImpl
+
+instance (ReadForeign a) => ReadForeign (Map String a) where
+  readImpl = (readImpl :: (_ -> _ (Object a))) >>> map (foldrWithIndex Map.insert Map.empty)
+else
+instance (ReadForeign a) => ReadForeign (Map Int a) where
+  readImpl = (readImpl :: (_ -> _ (Object a))) >>> map (foldrWithIndex (unsafeStringToInt >>> Map.insert) Map.empty)
+else
+instance (Newtype nt key, ReadForeign (Map key value)) => ReadForeign (Map nt value) where
+  readImpl = (readImpl :: (_ -> _ (Map key value))) >>> map (unsafeCoerce :: (Map key value -> Map nt value))
+
+unsafeStringToInt :: String → Int
+unsafeStringToInt = Int.fromString >>>
+  (fromMaybe' \_ -> unsafeCrashWith "impossible")

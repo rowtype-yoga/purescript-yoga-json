@@ -7,19 +7,19 @@ import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Data.List as List
 import Data.List.Lazy as LazyList
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, un)
 import Data.Nullable as Nullable
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (Variant, inj)
-import Debug (spy)
 import Foreign.Object as Object
-import Test.Spec (Spec, describe, it, itOnly)
+import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Util (roundtrips)
 import Type.Proxy (Proxy(..))
-import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, readJSON_, writeJSON)
+import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON)
 import Yoga.JSON.Variant (TaggedVariant(..), UntaggedVariant(..))
 
 spec :: Spec Unit
@@ -45,6 +45,12 @@ spec = describe "En- and decoding" $ do
     it "roundtrips List" $ traverse_ roundtrips (List.fromFoldable [["A", "B"],[]])
     it "roundtrips NonEmptyArray" $ roundtrips (NEA.cons' "A" ["B"])
     it "roundtrips Object" $ roundtrips (Object.fromHomogeneous { a: 12, b: 54 })
+    it "roundtrips String Map" $ roundtrips (Map.fromFoldable [("A" /\ 8),("C" /\ 7)])
+    it "roundtrips Int Map" $ roundtrips (Map.fromFoldable [(4 /\ "B"),(8 /\ "D")])
+    it "roundtrips Map with String newtype keys"
+      $ roundtrips (Map.fromFoldable [(Stringy "A" /\ "B"),(Stringy "C" /\ "D")])
+    it "roundtrips Map with Int newtype keys"
+      $ roundtrips (Map.fromFoldable [(Inty 4 /\ "B"),(Inty 8 /\ "D")])
 
   describe "works on record types" do
     it "roundtrips" do
@@ -86,6 +92,8 @@ spec = describe "En- and decoding" $ do
 
 type ExampleVariant = ("erwin" :: String, "jackie" :: Int)
 type ExampleTaggedVariant t v = TaggedVariant t v ExampleVariant
+
+erwin ∷ ∀ a r. a → Variant ( erwin ∷ a | r )
 erwin = inj (Proxy :: Proxy "erwin")
 type Erwin r = (erwin :: String | r)
 
@@ -93,5 +101,14 @@ newtype Stringy = Stringy String
 derive instance Newtype Stringy _
 derive newtype instance Show Stringy
 derive newtype instance Eq Stringy
+derive newtype instance Ord Stringy
 derive newtype instance WriteForeign Stringy
 derive newtype instance ReadForeign Stringy
+
+newtype Inty = Inty Int
+derive instance Newtype Inty _
+derive newtype instance Show Inty
+derive newtype instance Eq Inty
+derive newtype instance Ord Inty
+derive newtype instance WriteForeign Inty
+derive newtype instance ReadForeign Inty

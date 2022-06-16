@@ -6,8 +6,6 @@ in      conf
               conf.dependencies
             # [ "spec"
               , "spec-discovery"
-              , "console"
-              , "nonempty"
               , "aff"
               , "strings-extra"
               , "newtype"
