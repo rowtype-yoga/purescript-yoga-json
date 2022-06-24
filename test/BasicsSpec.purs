@@ -3,6 +3,7 @@ module Test.BasicsSpec where
 import Prelude
 
 import Data.Array.NonEmpty as NEA
+import Data.BigInt (BigInt)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Data.List as List
@@ -51,7 +52,26 @@ spec = describe "En- and decoding" $ do
       $ roundtrips (Map.fromFoldable [(Stringy "A" /\ "B"),(Stringy "C" /\ "D")])
     it "roundtrips Map with Int newtype keys"
       $ roundtrips (Map.fromFoldable [(Inty 4 /\ "B"),(Inty 8 /\ "D")])
+    it "roundtrips BigInt" do
+      let
+        inputStr = """{ "number":1, "big": 18014398509481982, "smallBig": 10 }"""
+        expected = """{"smallBig":"10","number":1,"big":"18014398509481982"}"""
+        parsed ∷ _ ({ number ∷ Int, big ∷ BigInt, smallBig ∷ BigInt })
+        parsed = readJSON inputStr
+        stringified = parsed <#> writeJSON
+      stringified `shouldEqual` (Right expected)
+      -- [TODO] Comment in as soon as bug in big-integers is fixed
+    -- it "roundtrips BigInt (2)" do
+    --   let
+    --     smallBig = BigInt.fromInt 10
+    --     big = unsafePartial $ fromJust $ BigInt.fromString "18014398509481982"
+        
+    --     expected = { big, smallBig }
+    --     json = spy "json" $ writeJSON expected
 
+    --     parsed ∷ _ ({ big ∷ BigInt, smallBig ∷ BigInt })
+    --     parsed = readJSON json
+    --   (spy "parsed" parsed) `shouldEqual` (Right expected)
   describe "works on record types" do
     it "roundtrips" do
       roundtrips { a: 12, b: "54" }
