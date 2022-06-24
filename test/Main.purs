@@ -71,7 +71,7 @@ type MyTestVariant = Variant
   , b ∷ Int
   )
 
-type MyTestBigInt = { number ∷ Number, big ∷ BigInt }
+type MyTestBigInt = { number ∷ Number, big ∷ BigInt, smallBig :: BigInt }
 
 roundtrips ∷
   ∀ a. ReadForeign a ⇒ WriteForeign a ⇒ Proxy a → String → Effect Unit
@@ -179,7 +179,7 @@ main = do
   -- "works with BigInt"
   roundtrips (Proxy ∷ Proxy MyTestBigInt)
     """
-    { "number":1, "big": 18014398509481982 }
+    { "number":1, "big": 18014398509481982, "smallBig": 10 }
   """
 
   -- run examples

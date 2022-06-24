@@ -35,19 +35,21 @@ import Control.Monad.Except (ExceptT(..), except, runExcept, runExceptT, withExc
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
 import Data.BigInt (BigInt)
+import Data.BigInt as BigInt
 import Data.Either (Either(..), hush, note)
 import Data.Identity (Identity(..))
-import Data.List.NonEmpty (singleton)
+import Data.List.NonEmpty (NonEmptyList, singleton)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Data.Traversable (sequence, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Variant (Variant, inj, on)
+import Debug (spy)
 import Effect.Exception (message, try)
 import Effect.Uncurried as EU
 import Effect.Unsafe (unsafePerformEffect)
-import Foreign (F, Foreign, ForeignError(..), MultipleErrors, fail, isNull, isUndefined, readArray, readBigInt, readBoolean, readChar, readInt, readNull, readNumber, readString, tagOf, unsafeFromForeign, unsafeToForeign)
+import Foreign (F, Foreign, ForeignError(..), MultipleErrors, fail, isNull, isUndefined, readArray, readBoolean, readChar, readInt, readNull, readNumber, readString, tagOf, unsafeFromForeign, unsafeReadTagged, unsafeToForeign)
 import Foreign.Index (readProp)
 import Foreign.Object (Object)
 import Foreign.Object as Object
@@ -166,8 +168,23 @@ instance readNumber ∷ ReadForeign Number where
 instance readInt ∷ ReadForeign Int where
   readImpl = readInt
 
+-- | Attempt to coerce a foreign value to a `BigInt`.
+readBigInt ∷
+  ∀ m. Monad m ⇒ Foreign → ExceptT (NonEmptyList ForeignError) m BigInt
+readBigInt = unsafeReadTagged "BigInt"
+
 instance ReadForeign BigInt where
-  readImpl = readBigInt
+  readImpl fValue = tryInt fValue <|> readBigInt fValue <|> tryString fValue
+    where
+    tryInt f = readInt f <#> BigInt.fromInt
+    tryString f = do
+      bi ← readString f
+      BigInt.fromString bi
+        # note
+            ( singleton $ ForeignError $ "String " <> bi <>
+                " could not be converted to BigInt"
+            )
+        # except
 
 instance readString ∷ ReadForeign String where
   readImpl = readString
