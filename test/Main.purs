@@ -2,6 +2,7 @@ module Test.Main where
 
 import Prelude
 
+import Data.BigInt (BigInt)
 import Data.Either (Either(..), either, isRight)
 import Data.List (List(..), (:))
 import Data.List.NonEmpty (NonEmptyList(..))
@@ -13,13 +14,13 @@ import Effect (Effect)
 import Effect.Exception (throw)
 import Foreign (ForeignError(..), MultipleErrors)
 import Foreign.Object (Object)
-import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON)
 import Test.Assert (assertEqual)
 import Test.EnumSumGeneric as Test.EnumSumGeneric
 import Test.Generic as Test.Generic
 import Test.Inferred as Test.Inferred
 import Test.Quickstart as Test.Quickstart
 import Type.Proxy (Proxy(..))
+import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON)
 
 type E a = Either MultipleErrors a
 
@@ -69,6 +70,8 @@ type MyTestVariant = Variant
   ( a ∷ String
   , b ∷ Int
   )
+
+type MyTestBigInt = { number ∷ Number, big ∷ BigInt }
 
 roundtrips ∷
   ∀ a. ReadForeign a ⇒ WriteForeign a ⇒ Proxy a → String → Effect Unit
@@ -171,6 +174,12 @@ main = do
   roundtrips (Proxy ∷ Proxy MyTestVariant)
     """
     { "type": "b", "value": 123  }
+  """
+
+  -- "works with BigInt"
+  roundtrips (Proxy ∷ Proxy MyTestBigInt)
+    """
+    { "number":1, "big": 18014398509481982 }
   """
 
   -- run examples

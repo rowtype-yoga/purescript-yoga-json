@@ -4,6 +4,7 @@
 , dependencies =
   [ "arrays"
   , "bifunctors"
+  , "bigints"
   , "console"
   , "control"
   , "effect"

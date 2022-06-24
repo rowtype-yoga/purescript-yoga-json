@@ -34,6 +34,7 @@ import Control.Alt ((<|>))
 import Control.Monad.Except (ExceptT(..), except, runExcept, runExceptT, withExcept)
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
+import Data.BigInt (BigInt)
 import Data.Either (Either(..), hush, note)
 import Data.Identity (Identity(..))
 import Data.List.NonEmpty (singleton)
@@ -46,7 +47,7 @@ import Data.Variant (Variant, inj, on)
 import Effect.Exception (message, try)
 import Effect.Uncurried as EU
 import Effect.Unsafe (unsafePerformEffect)
-import Foreign (F, Foreign, ForeignError(..), MultipleErrors, fail, isNull, isUndefined, readArray, readBoolean, readChar, readInt, readNull, readNumber, readString, tagOf, unsafeFromForeign, unsafeToForeign)
+import Foreign (F, Foreign, ForeignError(..), MultipleErrors, fail, isNull, isUndefined, readArray, readBigInt, readBoolean, readChar, readInt, readNull, readNumber, readString, tagOf, unsafeFromForeign, unsafeToForeign)
 import Foreign.Index (readProp)
 import Foreign.Object (Object)
 import Foreign.Object as Object
@@ -164,6 +165,9 @@ instance readNumber ∷ ReadForeign Number where
 
 instance readInt ∷ ReadForeign Int where
   readImpl = readInt
+
+instance ReadForeign BigInt where
+  readImpl = readBigInt
 
 instance readString ∷ ReadForeign String where
   readImpl = readString
@@ -316,6 +320,9 @@ instance WriteForeign Char where
   writeImpl = unsafeToForeign
 
 instance WriteForeign Number where
+  writeImpl = unsafeToForeign
+
+instance WriteForeign BigInt where
   writeImpl = unsafeToForeign
 
 instance WriteForeign Boolean where
