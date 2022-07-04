@@ -39,11 +39,13 @@ import Control.Monad.Except (ExceptT(..), except, runExcept, throwError, withExc
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
+import Data.BigInt (BigInt)
+import Data.BigInt as BigInt
 import Data.Either (Either, hush, note)
 import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Identity (Identity(..))
 import Data.Int as Int
-import Data.List.NonEmpty (singleton)
+import Data.List.NonEmpty (NonEmptyList, singleton)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', maybe)
@@ -57,7 +59,7 @@ import Data.Variant (Variant, inj, on)
 import Effect.Exception (message, try)
 import Effect.Uncurried as EU
 import Effect.Unsafe (unsafePerformEffect)
-import Foreign (F, Foreign, ForeignError(..), MultipleErrors, fail, isNull, isUndefined, readArray, readBoolean, readChar, readInt, readNull, readNumber, readString, tagOf, unsafeFromForeign, unsafeToForeign)
+import Foreign (F, Foreign, ForeignError(..), MultipleErrors, fail, isNull, isUndefined, readArray, readBoolean, readChar, readInt, readNull, readNumber, readString, tagOf, unsafeFromForeign, unsafeReadTagged, unsafeToForeign)
 import Foreign.Index (readProp)
 import Foreign.Object (Object)
 import Foreign.Object as Object
@@ -177,6 +179,24 @@ instance ReadForeign Number where
 instance ReadForeign Int where
   readImpl = readInt
 
+-- | Attempt to coerce a foreign value to a `BigInt`.
+readBigInt ∷
+  ∀ m. Monad m ⇒ Foreign → ExceptT (NonEmptyList ForeignError) m BigInt
+readBigInt = unsafeReadTagged "BigInt"
+
+instance ReadForeign BigInt where
+  readImpl fValue = tryInt fValue <|> readBigInt fValue <|> tryString fValue
+    where
+    tryInt f = readInt f <#> BigInt.fromInt
+    tryString f = do
+      bi ← readString f
+      BigInt.fromString bi
+        # note
+            ( singleton $ ForeignError $ "String " <> bi <>
+                " could not be converted to BigInt"
+            )
+        # except
+        
 instance ReadForeign String where
   readImpl = readString
 
@@ -349,6 +369,9 @@ instance WriteForeign Char where
   writeImpl = unsafeToForeign
 
 instance WriteForeign Number where
+  writeImpl = unsafeToForeign
+
+instance WriteForeign BigInt where
   writeImpl = unsafeToForeign
 
 instance WriteForeign Boolean where
