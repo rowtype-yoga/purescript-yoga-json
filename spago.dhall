@@ -19,6 +19,7 @@
   , "maybe"
   , "newtype"
   , "nullable"
+  , "numbers"
   , "ordered-collections"
   , "partial"
   , "prelude"

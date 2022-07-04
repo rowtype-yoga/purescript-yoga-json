@@ -46,6 +46,7 @@ spec = describe "Generics" $ do
         writeJSON (ATaggedInt 1) `shouldEqual` """{"type":"ATaggedInt","value":1}"""
         writeJSON (ATaggedString "Abc") `shouldEqual` """{"type":"ATaggedString","value":"Abc"}"""
 
+
     describe "data HalfEnum = NotEnum Int | IsEnum" do
       it "roundtrips" do
         roundtrips (NotEnum 1)

@@ -41,7 +41,7 @@ import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
 import Data.BigInt (BigInt)
 import Data.BigInt as BigInt
-import Data.Either (Either, hush, note)
+import Data.Either (Either(..), hush, note)
 import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Identity (Identity(..))
 import Data.Int as Int
@@ -51,6 +51,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', maybe)
 import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, toMaybe, toNullable)
+import Data.Number as Number
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Data.Traversable (sequence, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
@@ -185,18 +186,25 @@ readBigInt ∷
 readBigInt = unsafeReadTagged "BigInt"
 
 instance ReadForeign BigInt where
-  readImpl fValue = tryInt fValue <|> readBigInt fValue <|> tryString fValue
+  readImpl fValue = tryInt fValue <|> tryNumber fValue <|> readBigInt fValue <|> tryString fValue
     where
     tryInt f = readInt f <#> BigInt.fromInt
+    tryNumber f = do
+      num <- readNumber f
+      if Number.round num == num then
+        BigInt.fromNumber num
+          # note (err $ "Cannot convert Number " <> show num <> " to BigInt")
+          # except
+        else
+          (Left $ err $ "Cannot convert decimal Number " <> show num <> " to BigInt")
+            # except
     tryString f = do
       bi ← readString f
       BigInt.fromString bi
-        # note
-            ( singleton $ ForeignError $ "String " <> bi <>
-                " could not be converted to BigInt"
-            )
+        # note ( err $ "Cannot convert String " <> bi <> " to BigInt")
         # except
-        
+    err = pure <<< ForeignError
+
 instance ReadForeign String where
   readImpl = readString
 

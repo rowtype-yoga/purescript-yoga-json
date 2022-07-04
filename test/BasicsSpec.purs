@@ -54,9 +54,9 @@ spec = describe "En- and decoding" $ do
       $ roundtrips (Map.fromFoldable [(Inty 4 /\ "B"),(Inty 8 /\ "D")])
     it "roundtrips BigInt" do
       let
-        inputStr = """{ "number":1, "big": 18014398509481982, "smallBig": 10 }"""
-        expected = """{"smallBig":"10","number":1,"big":"18014398509481982"}"""
-        parsed ∷ _ ({ number ∷ Int, big ∷ BigInt, smallBig ∷ BigInt })
+        inputStr = """{ "number":1, "big": 18014398509481982, "mediumBig": 1652955871799, "smallBig": 10 }"""
+        expected = """{"smallBig":"10","number":1,"mediumBig":"1652955871799","big":"18014398509481982"}"""
+        parsed ∷ _ ({ number ∷ Int, mediumBig :: BigInt, big ∷ BigInt, smallBig ∷ BigInt })
         parsed = readJSON inputStr
         stringified = parsed <#> writeJSON
       stringified `shouldEqual` (Right expected)
@@ -65,7 +65,7 @@ spec = describe "En- and decoding" $ do
     --   let
     --     smallBig = BigInt.fromInt 10
     --     big = unsafePartial $ fromJust $ BigInt.fromString "18014398509481982"
-        
+
     --     expected = { big, smallBig }
     --     json = spy "json" $ writeJSON expected
 
