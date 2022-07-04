@@ -24,10 +24,18 @@ Check out the tests for how to encode/decode increasingly complex types.
 
 ## Differences to `simple-json`
 
+### Tuples
 There is an inbuilt codec for `Tuple`s thanks to @ursi
 
+### Generics
 It includes @justinwoo's codecs for en- and decoding generics inspired by
 [simple-json-generics](https://github.com/justinwoo/purescript-simple-json-generics)
+
+### BigInts
+It can *read* bigints (if you install `big-integer` as a JS dependency).
+
+### 💣 Cannot write bigints as bigints but only strings
+It seems that there is no way to write bigints in JavaScript except for writing your own `JSON.stringify`.
 
 ### 💣 The Variant Codec is different
 If you want to emulate `simple-json`'s format you may use the newtype  `TaggedVariant`
