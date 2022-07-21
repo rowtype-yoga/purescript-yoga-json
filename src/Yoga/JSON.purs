@@ -41,13 +41,14 @@ import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
 import Data.BigInt (BigInt)
 import Data.BigInt as BigInt
-import Data.DateTime (DateTime(..))
-import Data.DateTime as DateTime
-import Data.Either (Either(..), either, hush, note)
+import Data.DateTime (DateTime)
+import Data.Either (Either(..), hush, note)
+import Data.Foldable (class Foldable, foldl)
 import Data.FoldableWithIndex (foldrWithIndex)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Identity (Identity(..))
 import Data.Int as Int
-import Data.JSDate (JSDate, toISOString)
+import Data.JSDate (JSDate)
 import Data.JSDate as JSDate
 import Data.List.NonEmpty (NonEmptyList, singleton)
 import Data.Map (Map)
@@ -57,8 +58,7 @@ import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Number as Number
 import Data.Symbol (class IsSymbol, reflectSymbol)
-import Data.Traversable (sequence, traverse)
-import Data.TraversableWithIndex (traverseWithIndex)
+import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Data.Variant (Variant, inj, on)
 import Effect.Exception (message, try)
@@ -216,7 +216,7 @@ instance ReadForeign Boolean where
   readImpl = readBoolean
 
 instance ReadForeign a ⇒ ReadForeign (Array a) where
-  readImpl = traverseWithIndex readAtIdx <=< readArray
+  readImpl = sequenceCombining <<< mapWithIndex readAtIdx <=< readArray
 
 instance ReadForeign a ⇒ ReadForeign (Maybe a) where
   readImpl = readNullOrUndefined readImpl
@@ -242,8 +242,21 @@ instance (ReadForeign a, ReadForeign b) ⇒ ReadForeign (Either a b) where
       _ -> except $ Left (pure $ ForeignError $ "Invalid Either tag " <> tpe)
 
 instance ReadForeign a ⇒ ReadForeign (Object.Object a) where
-  readImpl = sequence <<< Object.mapWithKey readProp <=< readObject'
+  readImpl = gatherErrors <<< Object.mapWithKey readProp <=< readObject'
     where
+    gatherErrors :: Object (F a) -> F (Object a)
+    gatherErrors = Object.toUnfoldable
+      >>> Array.foldl fn (Right (Object.empty))
+      >>> except
+      where
+      fn :: _ -> _ -> (Either MultipleErrors (Object a))
+      fn acc (Tuple k v) = do
+        case acc, runExcept v of
+          Left errs, Left errsNew -> Left (errs <> errsNew)
+          Left errs, Right _ -> Left errs
+          Right obj, Right value -> Right (Object.insert k value obj)
+          Right _, Left errs -> Left errs
+
     readProp key value = except $ lmap (map (ErrorAtProperty key))
       (readImpl value # runExcept)
 
@@ -321,16 +334,20 @@ instance
   , Row.Cons name ty from' to
   ) ⇒
   ReadForeignFields (Cons name ty tail) from to where
-  getFields _ obj = do
-    compose <$> first <*> rest
+  getFields _ obj = except
+    case runExcept first, runExcept rest of
+      Right f, Right r -> Right (f <<< r)
+      Left e1, Left e2 -> Left (e1 <> e2)
+      Right _, Left es -> Left es
+      Left es, Right _ -> Left es
     where
-    value = withExcept' (readImpl =<< readProp name obj)
+    value = enrichErrorWithPropName (readImpl =<< readProp name obj)
     first = Builder.insert nameP <$> value
     rest = getFields tailP obj
     nameP = Proxy ∷ Proxy name
     tailP = Proxy ∷ Proxy tail
     name = reflectSymbol nameP
-    withExcept' = (withExcept <<< map) (ErrorAtProperty name)
+    enrichErrorWithPropName = (withExcept <<< map) (ErrorAtProperty name)
 
 readAtIdx ∷ ∀ a. ReadForeign a ⇒ Int → Foreign → F a
 readAtIdx i f = withExcept (map (ErrorAtIndex i)) (readImpl f)
@@ -552,3 +569,18 @@ instance ReadForeign DateTime where
 unsafeStringToInt :: String → Int
 unsafeStringToInt = Int.fromString >>>
   (fromMaybe' \_ -> unsafeCrashWith "impossible")
+
+sequenceCombining :: forall f a.
+  Monoid (f a) =>
+  Foldable f =>
+  Applicative f =>
+  f (F a) -> F (f a)
+sequenceCombining = foldl fn (Right mempty) >>> except
+  where
+  fn :: _ -> _ -> (Either MultipleErrors (f a))
+  fn acc elem = do
+    case acc, runExcept elem of
+      Left errs, Left errsNew -> Left (errs <> errsNew)
+      Left errs, Right _ -> Left errs
+      Right values, Right value -> Right (values <> pure value)
+      Right _, Left errs -> Left errs
