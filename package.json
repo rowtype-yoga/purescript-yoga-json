@@ -1,7 +1,7 @@
 {
   "scripts": {
     "test": "spago -x test.dhall test --purs-args '-g sourcemaps'",
-    "oprecoverage": "rimraf output && npm run test",
+    "precoverage": "rimraf output && npm run test",
     "coverage": "c8 --100 npm run test"
   },
   "dependencies": {
@@ -10,7 +10,6 @@
   "type": "module",
   "devDependencies": {
     "c8": "^7.12.0",
-    "nyc": "^15.1.0",
     "rimraf": "^3.0.2"
   }
 }
