@@ -1,6 +1,15 @@
 {
+  "scripts": {
+    "test": "spago -x test.dhall test --purs-args '-g sourcemaps'",
+    "precoverage": "rimraf output && npm run test",
+    "coverage": "c8 --100 npm run test"
+  },
   "dependencies": {
     "big-integer": "^1.6.51"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "c8": "^7.12.0",
+    "rimraf": "^3.0.2"
+  }
 }

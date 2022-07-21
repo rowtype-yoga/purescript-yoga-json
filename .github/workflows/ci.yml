@@ -34,4 +34,4 @@ jobs:
       - run: npm install
       - run: spago build
 
-      - run: spago -x test.dhall test
+      - run: npm run coverage

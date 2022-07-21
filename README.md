@@ -20,16 +20,23 @@ Check out the tests for how to encode/decode increasingly complex types.
 
 ## Migrate from `purescript-simple-json`
 
-`purescript-yoga-json` is a drop-in replacement for `purescript-simple-json`. Just change the imports from `Simple.JSON` to `Yoga.JSON`.
+`purescript-yoga-json` is almost (read below if you use variants) a drop-in replacement for `purescript-simple-json`. Just change the imports from `Simple.JSON` to `Yoga.JSON`.
 
-## Differences to `simple-json`
+## Additions over `simple-json`
 
 ### Tuples
 There is an inbuilt codec for `Tuple`s thanks to @ursi
+`yoga-json` represents tuples as arrays in JSON.
+
+### Tuples
+There is an inbuilt codec for `Either`s.
+`yoga-json` represents eithers as objects with a `type` and a `value` tag in JSON.
 
 ### Generics
 It includes @justinwoo's codecs for en- and decoding generics inspired by
 [simple-json-generics](https://github.com/justinwoo/purescript-simple-json-generics)
+
+It is possible to customise the representation of enums, tagged sum types, and untagged sum types via options.
 
 ### BigInts
 It can *read* bigints (if you install `big-integer` as a JS dependency).
@@ -37,7 +44,9 @@ It can *read* bigints (if you install `big-integer` as a JS dependency).
 ### 💣 Cannot write bigints as bigints but only strings
 It seems that there is no way to write bigints in JavaScript except for writing your own `JSON.stringify`.
 
-### 💣 The Variant Codec is different
+## Differences to `simple-json`
+
+### 💣 Variant codec
 If you want to emulate `simple-json`'s format you may use the newtype  `TaggedVariant`
 
 ```purescript

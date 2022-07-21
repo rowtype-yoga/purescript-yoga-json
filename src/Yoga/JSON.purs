@@ -45,6 +45,8 @@ import Data.Either (Either(..), hush, note)
 import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Identity (Identity(..))
 import Data.Int as Int
+import Data.JSDate (JSDate, toISOString)
+import Data.JSDate as JSDate
 import Data.List.NonEmpty (NonEmptyList, singleton)
 import Data.Map (Map)
 import Data.Map as Map
@@ -229,6 +231,14 @@ instance ReadForeign a ⇒ ReadForeign (Nullable a) where
       TypeMismatch inner other → TypeMismatch ("Nullable " <> inner) other
       _ → error
 
+instance (ReadForeign a, ReadForeign b) ⇒ ReadForeign (Either a b) where
+  readImpl f = do
+    { type: tpe, value } :: { type :: String, value :: Foreign } <- readImpl f
+    case tpe of
+      "left" -> Left <$> readImpl value
+      "right" -> Right <$> readImpl value
+      _ -> except $ Left (pure $ ForeignError $ "Invalid Either tag " <> tpe)
+
 instance ReadForeign a ⇒ ReadForeign (Object.Object a) where
   readImpl = sequence <<< Object.mapWithKey (const readImpl) <=< readObject'
     where
@@ -394,6 +404,11 @@ instance WriteForeign a ⇒ WriteForeign (Maybe a) where
 instance WriteForeign a ⇒ WriteForeign (Nullable a) where
   writeImpl = maybe (unsafeToForeign $ toNullable Nothing) writeImpl <<< toMaybe
 
+instance (WriteForeign a, WriteForeign b) ⇒ WriteForeign (Either a b) where
+  writeImpl value = case value of
+    Left l -> writeImpl { type: "left", value: writeImpl l}
+    Right r -> writeImpl { type: "right", value: writeImpl r}
+
 instance WriteForeign a ⇒ WriteForeign (Object.Object a) where
   writeImpl = unsafeToForeign <<< Object.mapWithKey (const writeImpl)
 
@@ -512,6 +527,13 @@ instance (ReadForeign a) => ReadForeign (Map Int a) where
 else
 instance (Newtype nt key, ReadForeign (Map key value)) => ReadForeign (Map nt value) where
   readImpl = (readImpl :: (_ -> _ (Map key value))) >>> map (unsafeCoerce :: (Map key value -> Map nt value))
+
+-- Date instances
+instance WriteForeign JSDate where
+  writeImpl = JSDate.toISOString >>> unsafePerformEffect >>> writeImpl
+
+instance ReadForeign JSDate where
+  readImpl = readImpl >>> map (JSDate.parse >>> unsafePerformEffect)
 
 unsafeStringToInt :: String → Int
 unsafeStringToInt = Int.fromString >>>

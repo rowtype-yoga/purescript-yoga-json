@@ -6,6 +6,8 @@ import Data.Array.NonEmpty as NEA
 import Data.BigInt (BigInt)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
+import Data.JSDate as JSDAte
+import Data.JSDate as JSDate
 import Data.List as List
 import Data.List.Lazy as LazyList
 import Data.Map as Map
@@ -15,6 +17,7 @@ import Data.Nullable as Nullable
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (Variant, inj)
+import Effect.Class (liftEffect)
 import Foreign.Object as Object
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
@@ -38,6 +41,11 @@ spec = describe "En- and decoding" $ do
       -- just roundtrips Nothing doesn't work when rendering the JSON
       roundtrips { empty: Nothing :: Maybe Int }
     it "roundtrips Nullable" $ traverse_ roundtrips [Nullable.notNull 3, Nullable.null]
+    it "roundtrips Either" do
+      roundtrips ((Left 3) :: Either Int Int)
+      roundtrips ((Right 3) :: Either String Int)
+      writeJSON (Right 3 :: Either Int Int) `shouldEqual` """{"value":3,"type":"right"}"""
+      writeJSON (Left true :: Either Boolean Int) `shouldEqual` """{"value":true,"type":"left"}"""
     it "roundtrips Tuple" $ do
       roundtrips (Tuple 3 4)
       roundtrips ("4" /\ 8 /\ Just 4)
@@ -61,6 +69,7 @@ spec = describe "En- and decoding" $ do
         stringified = parsed <#> writeJSON
       stringified `shouldEqual` (Right expected)
       -- [TODO] Comment in as soon as bug in big-integers is fixed
+      -- @sigma-andex: What bug? Can we link this???
     -- it "roundtrips BigInt (2)" do
     --   let
     --     smallBig = BigInt.fromInt 10
@@ -72,6 +81,16 @@ spec = describe "En- and decoding" $ do
     --     parsed ∷ _ ({ big ∷ BigInt, smallBig ∷ BigInt })
     --     parsed = readJSON json
     --   (spy "parsed" parsed) `shouldEqual` (Right expected)
+
+  describe "works with JSDate" do
+    it "roundtrips" do
+      now <- JSDate.now # liftEffect
+      roundtrips now
+      someDate <- JSDate.parse "2022-01-01:00:00:00Z" # liftEffect
+      let result = writeJSON someDate
+      let expected = show "2022-01-01T00:00:00.000Z"
+      result `shouldEqual` expected
+
   describe "works on record types" do
     it "roundtrips" do
       roundtrips { a: 12, b: "54" }

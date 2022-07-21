@@ -1,0 +1,8 @@
+{
+  "all": true,
+  "extension": [".purs"],
+  "include": [ "src/**/*.purs"],
+  "exclude": [ "src/Yoga/JSON/Generics.purs"],
+  "excludeAfterRemap": true,
+  "sourceMap": true
+}
