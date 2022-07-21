@@ -242,8 +242,11 @@ instance (ReadForeign a, ReadForeign b) ⇒ ReadForeign (Either a b) where
       _ -> except $ Left (pure $ ForeignError $ "Invalid Either tag " <> tpe)
 
 instance ReadForeign a ⇒ ReadForeign (Object.Object a) where
-  readImpl = sequence <<< Object.mapWithKey (const readImpl) <=< readObject'
+  readImpl = sequence <<< Object.mapWithKey readProp <=< readObject'
     where
+    readProp key value = except $ lmap (map (ErrorAtProperty key))
+      (readImpl value # runExcept)
+
     readObject' ∷ Foreign → F (Object Foreign)
     readObject' value
       | tagOf value == "Object" = pure $ unsafeFromForeign value
