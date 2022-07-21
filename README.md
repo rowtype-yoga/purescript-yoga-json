@@ -24,6 +24,12 @@ Check out the tests for how to encode/decode increasingly complex types.
 
 ## Additions over `simple-json`
 
+### Errors
+yoga-json will actually report multiple errors at once in the case of records, objects, and arrays.
+There's also a way to make errors more readable with `renderHumanError`:
+(e.g. `Must provide a value of type 'Int' instead of 'Object' at $.a.b.c.d[1]`)
+
+
 ### Tuples
 There is an inbuilt codec for `Tuple`s thanks to @ursi
 `yoga-json` represents tuples as arrays in JSON.
