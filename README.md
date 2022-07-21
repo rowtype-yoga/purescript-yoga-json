@@ -31,6 +31,8 @@ There is an inbuilt codec for `Tuple`s thanks to @ursi
 It includes @justinwoo's codecs for en- and decoding generics inspired by
 [simple-json-generics](https://github.com/justinwoo/purescript-simple-json-generics)
 
+It is possible to customise the representation of enums, tagged sum types, and untagged sum types via options.
+
 ### BigInts
 It can *read* bigints (if you install `big-integer` as a JS dependency).
 

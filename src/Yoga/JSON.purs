@@ -231,6 +231,14 @@ instance ReadForeign a ⇒ ReadForeign (Nullable a) where
       TypeMismatch inner other → TypeMismatch ("Nullable " <> inner) other
       _ → error
 
+instance (ReadForeign a, ReadForeign b) ⇒ ReadForeign (Either a b) where
+  readImpl f = do
+    { type: tpe, value } :: { type :: String, value :: Foreign } <- readImpl f
+    case tpe of
+      "left" -> Left <$> readImpl value
+      "right" -> Right <$> readImpl value
+      _ -> except $ Left (pure $ ForeignError $ "Invalid Either tag " <> tpe)
+
 instance ReadForeign a ⇒ ReadForeign (Object.Object a) where
   readImpl = sequence <<< Object.mapWithKey (const readImpl) <=< readObject'
     where
@@ -396,6 +404,11 @@ instance WriteForeign a ⇒ WriteForeign (Maybe a) where
 instance WriteForeign a ⇒ WriteForeign (Nullable a) where
   writeImpl = maybe (unsafeToForeign $ toNullable Nothing) writeImpl <<< toMaybe
 
+instance (WriteForeign a, WriteForeign b) ⇒ WriteForeign (Either a b) where
+  writeImpl value = case value of
+    Left l -> writeImpl { type: "left", value: writeImpl l}
+    Right r -> writeImpl { type: "right", value: writeImpl r}
+
 instance WriteForeign a ⇒ WriteForeign (Object.Object a) where
   writeImpl = unsafeToForeign <<< Object.mapWithKey (const writeImpl)
 
@@ -519,7 +532,6 @@ instance (Newtype nt key, ReadForeign (Map key value)) => ReadForeign (Map nt va
 instance WriteForeign JSDate where
   writeImpl = JSDate.toISOString >>> unsafePerformEffect >>> writeImpl
 
--- Date instances
 instance ReadForeign JSDate where
   readImpl = readImpl >>> map (JSDate.parse >>> unsafePerformEffect)
 

@@ -41,6 +41,11 @@ spec = describe "En- and decoding" $ do
       -- just roundtrips Nothing doesn't work when rendering the JSON
       roundtrips { empty: Nothing :: Maybe Int }
     it "roundtrips Nullable" $ traverse_ roundtrips [Nullable.notNull 3, Nullable.null]
+    it "roundtrips Either" do
+      roundtrips ((Left 3) :: Either Int Int)
+      roundtrips ((Right 3) :: Either String Int)
+      writeJSON (Right 3 :: Either Int Int) `shouldEqual` """{"value":3,"type":"right"}"""
+      writeJSON (Left true :: Either Boolean Int) `shouldEqual` """{"value":true,"type":"left"}"""
     it "roundtrips Tuple" $ do
       roundtrips (Tuple 3 4)
       roundtrips ("4" /\ 8 /\ Just 4)
