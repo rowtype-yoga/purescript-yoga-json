@@ -6,19 +6,20 @@ import Data.Array.NonEmpty as NEA
 import Data.BigInt (BigInt)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
-import Data.JSDate as JSDAte
 import Data.JSDate as JSDate
 import Data.List as List
 import Data.List.Lazy as LazyList
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe')
 import Data.Newtype (class Newtype, un)
 import Data.Nullable as Nullable
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (Variant, inj)
 import Effect.Class (liftEffect)
+import Effect.Now (nowDate, nowDateTime)
 import Foreign.Object as Object
+import Partial.Unsafe (unsafeCrashWith, unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Util (roundtrips)
@@ -87,6 +88,15 @@ spec = describe "En- and decoding" $ do
       now <- JSDate.now # liftEffect
       roundtrips now
       someDate <- JSDate.parse "2022-01-01:00:00:00Z" # liftEffect
+      let result = writeJSON someDate
+      let expected = show "2022-01-01T00:00:00.000Z"
+      result `shouldEqual` expected
+
+  describe "works with DateTime" do
+    it "roundtrips" do
+      now <- nowDateTime # liftEffect
+      roundtrips now
+      someDate <- JSDate.parse "2022-01-01:00:00:00Z" <#> (JSDate.toDateTime >>> fromMaybe' \_ -> unsafeCrashWith "nope") # liftEffect
       let result = writeJSON someDate
       let expected = show "2022-01-01T00:00:00.000Z"
       result `shouldEqual` expected

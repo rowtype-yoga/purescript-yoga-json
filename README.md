@@ -32,6 +32,9 @@ There is an inbuilt codec for `Tuple`s thanks to @ursi
 There is an inbuilt codec for `Either`s.
 `yoga-json` represents eithers as objects with a `type` and a `value` tag in JSON.
 
+### JSDate and DateTime
+Both are encoded as ISO8601 strings as spat out by `JSDate.toISOString`.
+
 ### Generics
 It includes @justinwoo's codecs for en- and decoding generics inspired by
 [simple-json-generics](https://github.com/justinwoo/purescript-simple-json-generics)

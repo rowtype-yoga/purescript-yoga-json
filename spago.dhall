@@ -7,6 +7,7 @@
   , "bigints"
   , "console"
   , "control"
+  , "datetime"
   , "effect"
   , "either"
   , "exceptions"

@@ -10,5 +10,6 @@ in      conf
               , "strings-extra"
               , "newtype"
               , "debug"
+              , "now"
               ]
         }

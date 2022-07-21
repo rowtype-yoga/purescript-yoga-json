@@ -41,7 +41,9 @@ import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
 import Data.BigInt (BigInt)
 import Data.BigInt as BigInt
-import Data.Either (Either(..), hush, note)
+import Data.DateTime (DateTime(..))
+import Data.DateTime as DateTime
+import Data.Either (Either(..), either, hush, note)
 import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Identity (Identity(..))
 import Data.Int as Int
@@ -534,6 +536,15 @@ instance WriteForeign JSDate where
 
 instance ReadForeign JSDate where
   readImpl = readImpl >>> map (JSDate.parse >>> unsafePerformEffect)
+
+instance WriteForeign DateTime where
+  writeImpl = JSDate.fromDateTime >>> writeImpl
+
+instance ReadForeign DateTime where
+  readImpl = readImpl >=>
+    JSDate.toDateTime
+      >>> note (pure $ ForeignError "Invalid date time")
+      >>> except
 
 unsafeStringToInt :: String → Int
 unsafeStringToInt = Int.fromString >>>
