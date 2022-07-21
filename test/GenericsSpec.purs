@@ -9,15 +9,23 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Util (roundtrips)
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeJSON)
-import Yoga.JSON.Generics (genericReadForeignTaggedSum, genericWriteForeignTaggedSum)
+import Yoga.JSON.Generics (defaultOptions, genericReadForeignEnum, genericReadForeignTaggedSum, genericReadForeignUntaggedProduct, genericReadForeignUntaggedSum, genericWriteForeignEnum, genericWriteForeignTaggedSum, genericWriteForeignUntaggedProduct, genericWriteForeignUntaggedSum)
 import Yoga.JSON.Generics as GenericTaggedSum
-import Yoga.JSON.Generics.EnumSumRep (genericReadForeignEnum, genericWriteForeignEnum)
-import Yoga.JSON.Generics.TaggedSumRep (defaultOptions)
-import Yoga.JSON.Generics.UntaggedProductRep (genericReadForeignUntaggedProduct, genericWriteForeignUntaggedProduct)
-import Yoga.JSON.Generics.UntaggedSumRep (genericReadForeignUntaggedSum, genericWriteForeignUntaggedSum)
+import Yoga.JSON.Generics.EnumSumRep as Enum
 
 spec ∷ Spec Unit
 spec = describe "Generics" $ do
+
+  describe "Enum" do
+    describe "MyEnum = Enum1 | Enum2 | Enum3" do
+      it "roundtrips" do
+       roundtrips (Enum1)
+       roundtrips (Enum3)
+
+    describe "works with custom constructor names" do
+      it "roundtrips" do
+       roundtrips (SomeOtherEnum2)
+       writeJSON (SomeThirdEnum3) `shouldEqual` "\"some_third_enum_3\""
 
   describe "Untagged" do
 
@@ -70,8 +78,20 @@ data MyEnum = Enum1 | Enum2 | Enum3
 derive instance Generic MyEnum _
 derive instance Eq MyEnum
 instance Show MyEnum where show = genericShow
-instance ReadForeign MyEnum where readImpl = genericReadForeignEnum
-instance WriteForeign MyEnum where writeImpl = genericWriteForeignEnum
+instance ReadForeign MyEnum
+  where readImpl = genericReadForeignEnum Enum.defaultOptions
+instance WriteForeign MyEnum
+  where writeImpl = genericWriteForeignEnum Enum.defaultOptions
+
+data MyEnum2 = SomeEnum2 | SomeOtherEnum2 | SomeThirdEnum3
+
+derive instance Generic MyEnum2 _
+derive instance Eq MyEnum2
+instance Show MyEnum2 where show = genericShow
+instance ReadForeign MyEnum2
+  where readImpl = genericReadForeignEnum { toConstructorName: snakeCase}
+instance WriteForeign MyEnum2
+  where writeImpl = genericWriteForeignEnum { toConstructorName: snakeCase}
 
 data IntOrString = AnInt Int | AString String
 derive instance Generic IntOrString _

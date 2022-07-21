@@ -45,6 +45,8 @@ import Data.Either (Either(..), hush, note)
 import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Identity (Identity(..))
 import Data.Int as Int
+import Data.JSDate (JSDate, toISOString)
+import Data.JSDate as JSDate
 import Data.List.NonEmpty (NonEmptyList, singleton)
 import Data.Map (Map)
 import Data.Map as Map
@@ -512,6 +514,14 @@ instance (ReadForeign a) => ReadForeign (Map Int a) where
 else
 instance (Newtype nt key, ReadForeign (Map key value)) => ReadForeign (Map nt value) where
   readImpl = (readImpl :: (_ -> _ (Map key value))) >>> map (unsafeCoerce :: (Map key value -> Map nt value))
+
+-- Date instances
+instance WriteForeign JSDate where
+  writeImpl = JSDate.toISOString >>> unsafePerformEffect >>> writeImpl
+
+-- Date instances
+instance ReadForeign JSDate where
+  readImpl = readImpl >>> map (JSDate.parse >>> unsafePerformEffect)
 
 unsafeStringToInt :: String → Int
 unsafeStringToInt = Int.fromString >>>

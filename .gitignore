@@ -6,3 +6,5 @@
 /.purs*
 /.psa*
 /.spago/
+/.nyc_output/
+/coverage/

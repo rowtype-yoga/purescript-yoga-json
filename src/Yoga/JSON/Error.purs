@@ -14,3 +14,5 @@ toJSONPath fe = "$" <> path
     ErrorAtIndex i e -> "[" <> show i <> "]" <> go e
     ErrorAtProperty _ (TypeMismatch _ "undefined") -> ""
     ErrorAtProperty prop e -> "." <> prop <> go e
+
+definitelyUnused x = x + x

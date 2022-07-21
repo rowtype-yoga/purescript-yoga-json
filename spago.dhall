@@ -15,6 +15,7 @@
   , "foreign-object"
   , "identity"
   , "integers"
+  , "js-date"
   , "lists"
   , "maybe"
   , "newtype"
