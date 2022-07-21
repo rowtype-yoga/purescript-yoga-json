@@ -28,7 +28,7 @@ Check out the tests for how to encode/decode increasingly complex types.
 There is an inbuilt codec for `Tuple`s thanks to @ursi
 `yoga-json` represents tuples as arrays in JSON.
 
-### Tuples
+### Eithers
 There is an inbuilt codec for `Either`s.
 `yoga-json` represents eithers as objects with a `type` and a `value` tag in JSON.
 
