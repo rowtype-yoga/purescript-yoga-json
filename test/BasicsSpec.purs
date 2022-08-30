@@ -24,7 +24,7 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Util (roundtrips)
 import Type.Proxy (Proxy(..))
-import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON)
+import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON, E)
 import Yoga.JSON.Variant (TaggedVariant(..), UntaggedVariant(..))
 
 spec :: Spec Unit
@@ -32,6 +32,14 @@ spec = describe "En- and decoding" $ do
 
   describe "works on primitive types" do
     it "roundtrips Number" $ roundtrips 3.1414
+    it "accept Int for Number" do
+      let 
+        actual :: E Number
+        actual = readJSON "4"
+        actual2 :: E Number
+        actual2 = readJSON "4.0"
+      actual `shouldEqual` Right 4.0
+      actual2 `shouldEqual` Right 4.0
     it "roundtrips Int" $ roundtrips (-200)
     it "roundtrips Char" $ roundtrips 'a'
     it "roundtrips String" $ roundtrips "A"

@@ -179,7 +179,7 @@ instance ReadForeign Char where
   readImpl = readChar
 
 instance ReadForeign Number where
-  readImpl = readNumber
+  readImpl f = readNumber f <|> (readInt f <#> Int.toNumber)
 
 instance ReadForeign Int where
   readImpl = readInt
