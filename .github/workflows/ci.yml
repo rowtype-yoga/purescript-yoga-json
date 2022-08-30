@@ -34,4 +34,3 @@ jobs:
       - run: npm install
       - run: spago build
 
-      - run: npm run coverage
