@@ -58,7 +58,7 @@ instance
     s ← JSON.readImpl f
     if s == options.toConstructorName name then pure $ GR.Constructor GR.NoArguments
     else fail <<< Foreign.ForeignError $
-      "Enum string " <> s <> " did not match expected string " <> name
+      "Enum string " <> s <> " did not match expected string " <> options.toConstructorName name
     where
     name = reflectSymbol (Proxy ∷ Proxy name)
   genericEnumWriteForeign options (GR.Constructor GR.NoArguments) =
