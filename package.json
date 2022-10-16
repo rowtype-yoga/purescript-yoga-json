@@ -5,7 +5,6 @@
     "coverage": "c8 --100 npm run test"
   },
   "dependencies": {
-    "big-integer": "^1.6.51"
   },
   "type": "module",
   "devDependencies": {
