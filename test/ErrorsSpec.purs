@@ -3,19 +3,17 @@ module Test.ErrorsSpec where
 import Prelude
 
 import Data.Array as Array
-import Data.Array.NonEmpty as NEA
 import Data.Bifunctor (lmap)
-import Data.Either (Either(..), blush, either)
+import Data.Either (Either(..), blush)
 import Data.Maybe (Maybe(..))
 import Foreign (ForeignError(..))
 import Foreign.Object (Object)
-import Foreign.Object as Object
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Type.Proxy (Proxy(..))
 import Yoga.JSON (class ReadForeign, E, readJSON)
 import Yoga.JSON as JSON
-import Yoga.JSON.Error (errorToJSON, renderHumanError, toJSONPath)
+import Yoga.JSON.Error (renderHumanError, toJSONPath)
 
 spec ∷ Spec Unit
 spec = describe "Errors" do
