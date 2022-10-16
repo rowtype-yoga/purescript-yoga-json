@@ -15,7 +15,6 @@ import Data.Nullable as Nullable
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (Variant, inj)
-import Debug (spy)
 import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
 import Foreign.Object as Object
