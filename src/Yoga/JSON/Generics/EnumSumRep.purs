@@ -36,8 +36,8 @@ genericWriteForeignEnum options a = genericEnumWriteForeign options (GR.from a)
 
 -- | Generic Enum Sum Representations, with constructor names as strings
 class GenericEnumSumRep rep where
-  genericEnumReadForeign ∷ Options -> Foreign → Foreign.F rep
-  genericEnumWriteForeign ∷ Options -> rep → Foreign
+  genericEnumReadForeign ∷ Options → Foreign → Foreign.F rep
+  genericEnumWriteForeign ∷ Options → rep → Foreign
 
 instance
   ( GenericEnumSumRep a

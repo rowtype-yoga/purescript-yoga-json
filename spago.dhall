@@ -4,7 +4,7 @@
 , dependencies =
   [ "arrays"
   , "bifunctors"
-  , "bigints"
+  , "js-bigints"
   , "console"
   , "control"
   , "datetime"

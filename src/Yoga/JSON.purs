@@ -39,8 +39,6 @@ import Control.Monad.Except (ExceptT(..), except, runExcept, throwError, withExc
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
-import Data.BigInt (BigInt)
-import Data.BigInt as BigInt
 import Data.DateTime (DateTime)
 import Data.Either (Either(..), hush, note)
 import Data.Foldable (class Foldable, foldl)
@@ -68,6 +66,8 @@ import Foreign (F, Foreign, ForeignError(..), MultipleErrors, fail, isNull, isUn
 import Foreign.Index (readProp)
 import Foreign.Object (Object)
 import Foreign.Object as Object
+import Js.BigInt.BigInt (BigInt)
+import Js.BigInt.BigInt (BigInt, fromInt, fromNumber, fromString) as BigInt
 import Partial.Unsafe (unsafeCrashWith)
 import Prim.Row as Row
 import Prim.RowList (class RowToList, Cons, Nil, RowList)
@@ -194,18 +194,18 @@ instance ReadForeign BigInt where
     where
     tryInt f = readInt f <#> BigInt.fromInt
     tryNumber f = do
-      num <- readNumber f
+      num ← readNumber f
       if Number.round num == num then
         BigInt.fromNumber num
           # note (err $ "Cannot convert Number " <> show num <> " to BigInt")
           # except
-        else
-          (Left $ err $ "Cannot convert decimal Number " <> show num <> " to BigInt")
-            # except
+      else
+        (Left $ err $ "Cannot convert decimal Number " <> show num <> " to BigInt")
+          # except
     tryString f = do
       bi ← readString f
       BigInt.fromString bi
-        # note ( err $ "Cannot convert String " <> bi <> " to BigInt")
+        # note (err $ "Cannot convert String " <> bi <> " to BigInt")
         # except
     err = pure <<< ForeignError
 
@@ -235,27 +235,27 @@ instance ReadForeign a ⇒ ReadForeign (Nullable a) where
 
 instance (ReadForeign a, ReadForeign b) ⇒ ReadForeign (Either a b) where
   readImpl f = do
-    { type: tpe, value } :: { type :: String, value :: Foreign } <- readImpl f
+    { type: tpe, value } ∷ { type ∷ String, value ∷ Foreign } ← readImpl f
     case tpe of
-      "left" -> Left <$> readImpl value
-      "right" -> Right <$> readImpl value
-      _ -> except $ Left (pure $ ForeignError $ "Invalid Either tag " <> tpe)
+      "left" → Left <$> readImpl value
+      "right" → Right <$> readImpl value
+      _ → except $ Left (pure $ ForeignError $ "Invalid Either tag " <> tpe)
 
 instance ReadForeign a ⇒ ReadForeign (Object.Object a) where
   readImpl = gatherErrors <<< Object.mapWithKey readProp <=< readObject'
     where
-    gatherErrors :: Object (F a) -> F (Object a)
+    gatherErrors ∷ Object (F a) → F (Object a)
     gatherErrors = Object.toUnfoldable
       >>> Array.foldl fn (Right (Object.empty))
       >>> except
       where
-      fn :: _ -> _ -> (Either MultipleErrors (Object a))
+      fn ∷ _ → _ → (Either MultipleErrors (Object a))
       fn acc (Tuple k v) = do
         case acc, runExcept v of
-          Left errs, Left errsNew -> Left (errs <> errsNew)
-          Left errs, Right _ -> Left errs
-          Right obj, Right value -> Right (Object.insert k value obj)
-          Right _, Left errs -> Left errs
+          Left errs, Left errsNew → Left (errs <> errsNew)
+          Left errs, Right _ → Left errs
+          Right obj, Right value → Right (Object.insert k value obj)
+          Right _, Left errs → Left errs
 
     readProp key value = except $ lmap (map (ErrorAtProperty key))
       (readImpl value # runExcept)
@@ -336,10 +336,10 @@ instance
   ReadForeignFields (Cons name ty tail) from to where
   getFields _ obj = except
     case runExcept first, runExcept rest of
-      Right f, Right r -> Right (f <<< r)
-      Left e1, Left e2 -> Left (e1 <> e2)
-      Right _, Left es -> Left es
-      Left es, Right _ -> Left es
+      Right f, Right r → Right (f <<< r)
+      Left e1, Left e2 → Left (e1 <> e2)
+      Right _, Left es → Left es
+      Left es, Right _ → Left es
     where
     value = enrichErrorWithPropName (readImpl =<< readProp name obj)
     first = Builder.insert nameP <$> value
@@ -379,8 +379,8 @@ instance
   , ReadForeignVariant tail row
   ) ⇒
   ReadForeignVariant (Cons name ty tail) row where
-  readVariantImpl _ o = readVariantImpl (Proxy :: Proxy tail) o <|> ado
-    value :: ty <- readProp name o >>= readImpl
+  readVariantImpl _ o = readVariantImpl (Proxy ∷ Proxy tail) o <|> ado
+    value ∷ ty ← readProp name o >>= readImpl
     in inj namep value
     where
     namep = Proxy ∷ Proxy name
@@ -428,8 +428,8 @@ instance WriteForeign a ⇒ WriteForeign (Nullable a) where
 
 instance (WriteForeign a, WriteForeign b) ⇒ WriteForeign (Either a b) where
   writeImpl value = case value of
-    Left l -> writeImpl { type: "left", value: writeImpl l}
-    Right r -> writeImpl { type: "right", value: writeImpl r}
+    Left l → writeImpl { type: "left", value: writeImpl l }
+    Right r → writeImpl { type: "right", value: writeImpl r }
 
 instance WriteForeign a ⇒ WriteForeign (Object.Object a) where
   writeImpl = unsafeToForeign <<< Object.mapWithKey (const writeImpl)
@@ -532,23 +532,19 @@ instance writeForeignNEArray ∷ WriteForeign a ⇒ WriteForeign (NonEmptyArray 
   writeImpl a = writeImpl <<< toArray $ a
 
 -- Map instances
-instance (WriteForeign a) => WriteForeign (Map String a) where
+instance (WriteForeign a) ⇒ WriteForeign (Map String a) where
   writeImpl = foldrWithIndex Object.insert Object.empty >>> writeImpl
-else
-instance (WriteForeign a) => WriteForeign (Map Int a) where
+else instance (WriteForeign a) ⇒ WriteForeign (Map Int a) where
   writeImpl = foldrWithIndex (show >>> Object.insert) Object.empty >>> writeImpl
-else
-instance (Newtype nt key, WriteForeign (Map key value)) => WriteForeign (Map nt value) where
-  writeImpl = (unsafeCoerce :: (_ -> Map key value )) >>> writeImpl
+else instance (Newtype nt key, WriteForeign (Map key value)) ⇒ WriteForeign (Map nt value) where
+  writeImpl = (unsafeCoerce ∷ (_ → Map key value)) >>> writeImpl
 
-instance (ReadForeign a) => ReadForeign (Map String a) where
-  readImpl = (readImpl :: (_ -> _ (Object a))) >>> map (foldrWithIndex Map.insert Map.empty)
-else
-instance (ReadForeign a) => ReadForeign (Map Int a) where
-  readImpl = (readImpl :: (_ -> _ (Object a))) >>> map (foldrWithIndex (unsafeStringToInt >>> Map.insert) Map.empty)
-else
-instance (Newtype nt key, ReadForeign (Map key value)) => ReadForeign (Map nt value) where
-  readImpl = (readImpl :: (_ -> _ (Map key value))) >>> map (unsafeCoerce :: (Map key value -> Map nt value))
+instance (ReadForeign a) ⇒ ReadForeign (Map String a) where
+  readImpl = (readImpl ∷ (_ → _ (Object a))) >>> map (foldrWithIndex Map.insert Map.empty)
+else instance (ReadForeign a) ⇒ ReadForeign (Map Int a) where
+  readImpl = (readImpl ∷ (_ → _ (Object a))) >>> map (foldrWithIndex (unsafeStringToInt >>> Map.insert) Map.empty)
+else instance (Newtype nt key, ReadForeign (Map key value)) ⇒ ReadForeign (Map nt value) where
+  readImpl = (readImpl ∷ (_ → _ (Map key value))) >>> map (unsafeCoerce ∷ (Map key value → Map nt value))
 
 -- Date instances
 instance WriteForeign JSDate where
@@ -566,21 +562,23 @@ instance ReadForeign DateTime where
       >>> note (pure $ ForeignError "Invalid date time")
       >>> except
 
-unsafeStringToInt :: String → Int
+unsafeStringToInt ∷ String → Int
 unsafeStringToInt = Int.fromString >>>
-  (fromMaybe' \_ -> unsafeCrashWith "impossible")
+  (fromMaybe' \_ → unsafeCrashWith "impossible")
 
-sequenceCombining :: forall f a.
-  Monoid (f a) =>
-  Foldable f =>
-  Applicative f =>
-  f (F a) -> F (f a)
+sequenceCombining ∷
+  ∀ f a.
+  Monoid (f a) ⇒
+  Foldable f ⇒
+  Applicative f ⇒
+  f (F a) →
+  F (f a)
 sequenceCombining = foldl fn (Right mempty) >>> except
   where
-  fn :: _ -> _ -> (Either MultipleErrors (f a))
+  fn ∷ _ → _ → (Either MultipleErrors (f a))
   fn acc elem = do
     case acc, runExcept elem of
-      Left errs, Left errsNew -> Left (errs <> errsNew)
-      Left errs, Right _ -> Left errs
-      Right values, Right value -> Right (values <> pure value)
-      Right _, Left errs -> Left errs
+      Left errs, Left errsNew → Left (errs <> errsNew)
+      Left errs, Right _ → Left errs
+      Right values, Right value → Right (values <> pure value)
+      Right _, Left errs → Left errs

@@ -20,8 +20,8 @@ newtype TaggedVariant ∷ Symbol → Symbol → Row Type → Type
 newtype TaggedVariant tt vt v = TaggedVariant (Variant v)
 
 instance Newtype (TaggedVariant tt vt v) (Variant v)
-derive newtype instance (Show (Variant v)) => Show (TaggedVariant tt vt v)
-derive newtype instance (Eq (Variant v)) => Eq (TaggedVariant tt vt v)
+derive newtype instance (Show (Variant v)) ⇒ Show (TaggedVariant tt vt v)
+derive newtype instance (Eq (Variant v)) ⇒ Eq (TaggedVariant tt vt v)
 
 instance
   ( RowToList row rl
@@ -104,7 +104,7 @@ instance
   readVariantImpl _ o = readVariantImpl (Proxy ∷ Proxy tail) o <|> do
     type_ ← readProp typeTag o >>= readImpl
     if type_ == name then do
-      value :: ty <- readProp valueTag o >>= readImpl
+      value ∷ ty ← readProp valueTag o >>= readImpl
       pure $ TaggedVariant (inj namep value)
     else
       (fail <<< ForeignError $ "Did not match variant tag " <> name)
@@ -121,8 +121,8 @@ newtype UntaggedVariant ∷ Row Type → Type
 newtype UntaggedVariant v = UntaggedVariant (Variant v)
 
 instance Newtype (UntaggedVariant v) (Variant v)
-derive newtype instance (Show (Variant v)) => Show (UntaggedVariant v)
-derive newtype instance (Eq (Variant v)) => Eq (UntaggedVariant v)
+derive newtype instance (Show (Variant v)) ⇒ Show (UntaggedVariant v)
+derive newtype instance (Eq (Variant v)) ⇒ Eq (UntaggedVariant v)
 
 instance
   ( RowToList row rl
@@ -190,7 +190,7 @@ instance
   ReadForeignUntaggedVariant (Cons name ty tail) row where
   readUntaggedVariantImpl _ o =
     readUntaggedVariantImpl (Proxy ∷ Proxy tail) o <|> ado
-      v <- readImpl o
+      v ← readImpl o
       in UntaggedVariant (inj namep v)
 
     where

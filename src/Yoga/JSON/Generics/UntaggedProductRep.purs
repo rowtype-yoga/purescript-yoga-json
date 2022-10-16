@@ -58,18 +58,21 @@ genericWriteForeignUntaggedProduct ∷
 genericWriteForeignUntaggedProduct a =
   JSON.write (genericWriteForeignUntaggedProductRep [] (GR.from a))
 
-
 -- | Generic Untagged Product Representations, as a heterogeneous fixed-length array
 -- | You should consider using records instead in almost any usage.
 class WriteGenericUntaggedProduct rep where
   genericWriteForeignUntaggedProductRep ∷ Array Foreign → rep → Array Foreign
 
-instance (WriteGenericUntaggedProduct a) ⇒
+instance
+  ( WriteGenericUntaggedProduct a
+  ) ⇒
   WriteGenericUntaggedProduct (GR.Constructor name a) where
   genericWriteForeignUntaggedProductRep arr (GR.Constructor a) =
     genericWriteForeignUntaggedProductRep arr a
 
-instance (JSON.WriteForeign a) ⇒
+instance
+  ( JSON.WriteForeign a
+  ) ⇒
   WriteGenericUntaggedProduct (GR.Argument a) where
   genericWriteForeignUntaggedProductRep arr (GR.Argument a) =
     Array.snoc arr (JSON.write a)
