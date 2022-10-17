@@ -48,10 +48,7 @@ It includes @justinwoo's codecs for en- and decoding generics inspired by
 It is possible to customise the representation of enums, tagged sum types, and untagged sum types via options.
 
 ### BigInts
-It can *read* bigints (if you install `big-integer` as a JS dependency).
-
-### 💣 Cannot write bigints as bigints but only strings
-It seems that there is no way to write bigints in JavaScript except for writing your own `JSON.stringify`.
+There is an inbuilt codec for `BigInt`. Writing a `BigInt` however will result in a String. This is a current limitation of JavaScript and the only way around it - it seems - is writing your own JSON.stringify method (which is out of scope of this project). 
 
 ## Differences to `simple-json`
 
