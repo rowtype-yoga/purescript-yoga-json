@@ -1,10 +1,5 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.15.2-20220610/packages.dhall
-        sha256:348212b7c79da7d343bed71b48ed164d426f1977f92196babac49bd560b32e75
+      https://github.com/purescript/package-sets/releases/download/psc-0.15.4-20221017/packages.dhall
+        sha256:88a9c22385f181da79caa7922502558b37a5fb759d45b45e904b105b8f88f6eb
 
 in  upstream
-  with js-bigints =
-    { dependencies = [ "maybe", "prelude" ]
-    , version = "v1.2.0"
-    , repo = "https://github.com/sigma-andex/purescript-js-bigints"
-    }
