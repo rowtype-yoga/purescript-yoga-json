@@ -5,7 +5,6 @@
   [ "arrays"
   , "bifunctors"
   , "js-bigints"
-  , "console"
   , "control"
   , "datetime"
   , "effect"
