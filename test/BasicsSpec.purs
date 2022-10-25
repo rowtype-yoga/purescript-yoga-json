@@ -135,7 +135,7 @@ spec = describe "En- and decoding" $ do
       roundtrips (UntaggedVariant (erwin "e") ∷ UntaggedVariant (Erwin ()))
       let bareVariant = erwin "e"
       let res = writeJSON (UntaggedVariant bareVariant ∷ UntaggedVariant ExampleVariant)
-      let expected = show "\"e\""
+      let expected = "\"e\""
       res `shouldEqual` expected
       let
         parsed ∷ _ (UntaggedVariant ExampleVariant)

@@ -55,7 +55,7 @@ import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', maybe)
 import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Number as Number
-import Data.String.NonEmpty.Internal (NonEmptyString(..))
+import Data.String.NonEmpty.Internal (NonEmptyString)
 import Data.String.NonEmpty.Internal as NonEmptyString
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Data.Traversable (traverse)
