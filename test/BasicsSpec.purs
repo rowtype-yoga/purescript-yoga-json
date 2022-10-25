@@ -12,11 +12,13 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust, fromMaybe')
 import Data.Newtype (class Newtype, un)
 import Data.Nullable as Nullable
+import Data.String.NonEmpty (NonEmptyString, nes)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (Variant, inj)
 import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
+import Foreign (ForeignError(..))
 import Foreign.Object as Object
 import Js.BigInt.BigInt (BigInt)
 import Js.BigInt.BigInt as BigInt
@@ -133,12 +135,19 @@ spec = describe "En- and decoding" $ do
       roundtrips (UntaggedVariant (erwin "e") ∷ UntaggedVariant (Erwin ()))
       let bareVariant = erwin "e"
       let res = writeJSON (UntaggedVariant bareVariant ∷ UntaggedVariant ExampleVariant)
-      let expected = """"e""""
+      let expected = "\"e\""
       res `shouldEqual` expected
       let
         parsed ∷ _ (UntaggedVariant ExampleVariant)
         parsed = readJSON expected
       (un UntaggedVariant <$> parsed) `shouldEqual` Right bareVariant
+
+  describe "works on non empty strings" do
+    it "roundtrips NonEmptyString" do
+      roundtrips (nes (Proxy :: Proxy "Non-Empty"))
+    it "fails to decode empty strings"  do
+      let (result :: (Either _ NonEmptyString)) = readJSON (show "")
+      result `shouldEqual` Left (pure $ ForeignError "String must not be empty")
 
 type ExampleVariant = ("erwin" ∷ String, "jackie" ∷ Int)
 type ExampleTaggedVariant t v = TaggedVariant t v ExampleVariant

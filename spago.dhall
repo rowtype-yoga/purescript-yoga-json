@@ -4,7 +4,6 @@
 , dependencies =
   [ "arrays"
   , "bifunctors"
-  , "js-bigints"
   , "control"
   , "datetime"
   , "effect"
@@ -15,6 +14,7 @@
   , "foreign-object"
   , "identity"
   , "integers"
+  , "js-bigints"
   , "js-date"
   , "lists"
   , "maybe"
@@ -25,6 +25,7 @@
   , "partial"
   , "prelude"
   , "record"
+  , "strings"
   , "transformers"
   , "tuples"
   , "typelevel-prelude"

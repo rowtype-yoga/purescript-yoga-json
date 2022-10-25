@@ -55,6 +55,8 @@ import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', maybe)
 import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Number as Number
+import Data.String.NonEmpty.Internal (NonEmptyString)
+import Data.String.NonEmpty.Internal as NonEmptyString
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
@@ -211,6 +213,12 @@ instance ReadForeign BigInt where
 
 instance ReadForeign String where
   readImpl = readString
+
+instance ReadForeign NonEmptyString where
+  readImpl = readString >=>
+    NonEmptyString.fromString
+      >>> note (pure $ ForeignError "String must not be empty")
+      >>> except
 
 instance ReadForeign Boolean where
   readImpl = readBoolean
@@ -400,6 +408,9 @@ instance WriteForeign Foreign where
   writeImpl = identity
 
 instance WriteForeign String where
+  writeImpl = unsafeToForeign
+
+instance WriteForeign NonEmptyString where
   writeImpl = unsafeToForeign
 
 instance WriteForeign Int where
