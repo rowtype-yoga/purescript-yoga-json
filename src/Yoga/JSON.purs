@@ -38,6 +38,7 @@ import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
 import Data.DateTime (DateTime)
+import Data.DateTime.Instant (Instant, instant, unInstant)
 import Data.Either (Either(..), hush, note)
 import Data.Foldable (class Foldable, foldl)
 import Data.FoldableWithIndex (foldrWithIndex)
@@ -50,12 +51,13 @@ import Data.List.NonEmpty (NonEmptyList, singleton)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', maybe)
-import Data.Newtype (class Newtype)
+import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Number as Number
 import Data.String.NonEmpty.Internal (NonEmptyString)
 import Data.String.NonEmpty.Internal as NonEmptyString
 import Data.Symbol (class IsSymbol, reflectSymbol)
+import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Data.Variant (Variant, inj, on)
@@ -572,6 +574,22 @@ instance ReadForeign DateTime where
     JSDate.toDateTime
       >>> note (pure $ ForeignError "Invalid date time")
       >>> except
+
+instance WriteForeign Instant where
+  writeImpl = unInstant >>> writeImpl
+
+instance ReadForeign Instant where
+  readImpl f = do
+    millis ← readImpl f
+    case instant millis of
+      Nothing → except $ Left (pure $ ForeignError "Invalid instant")
+      Just ins → pure ins
+
+instance WriteForeign Milliseconds where
+  writeImpl = unwrap >>> writeImpl
+
+instance ReadForeign Milliseconds where
+  readImpl = readImpl >>> map wrap
 
 unsafeStringToInt ∷ String → Int
 unsafeStringToInt = Int.fromString >>>
