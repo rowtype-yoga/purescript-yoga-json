@@ -29,6 +29,7 @@ import Test.Util (roundtrips)
 import Type.Proxy (Proxy(..))
 import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON)
 import Yoga.JSON.Variant (TaggedVariant(..), UntaggedVariant(..))
+import Yoga.Tree (Tree, mkLeaf, mkTree, showTree)
 
 spec ∷ Spec Unit
 spec = describe "En- and decoding" $ do
@@ -144,10 +145,29 @@ spec = describe "En- and decoding" $ do
 
   describe "works on non empty strings" do
     it "roundtrips NonEmptyString" do
-      roundtrips (nes (Proxy :: Proxy "Non-Empty"))
-    it "fails to decode empty strings"  do
-      let (result :: (Either _ NonEmptyString)) = readJSON (show "")
+      roundtrips (nes (Proxy ∷ Proxy "Non-Empty"))
+    it "fails to decode empty strings" do
+      let (result ∷ (Either _ NonEmptyString)) = readJSON (show "")
       result `shouldEqual` Left (pure $ ForeignError "String must not be empty")
+
+  describe "works on trees" do
+    it "roundtrips" do
+      let t = mkTree "a" [ mkTree "b" [ mkLeaf "c", mkLeaf "d" ] ]
+      roundtrips (ShowTree t)
+
+    it "encodes as expected" do
+      let t = mkTree "a" [ mkTree "b" [ mkLeaf "c", mkLeaf "d" ] ]
+      writeJSON (ShowTree t) `shouldEqual`
+        """{"value":"a","children":[{"value":"b","children":[{"value":"c"},{"value":"d"}]}]}"""
+
+newtype ShowTree = ShowTree (Tree String)
+
+instance Show ShowTree where
+  show (ShowTree t) = showTree t
+
+derive newtype instance WriteForeign ShowTree
+derive newtype instance ReadForeign ShowTree
+derive newtype instance Eq ShowTree
 
 type ExampleVariant = ("erwin" ∷ String, "jackie" ∷ Int)
 type ExampleTaggedVariant t v = TaggedVariant t v ExampleVariant

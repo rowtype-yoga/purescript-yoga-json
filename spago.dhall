@@ -12,6 +12,7 @@
   , "foldable-traversable"
   , "foreign"
   , "foreign-object"
+  , "free"
   , "identity"
   , "integers"
   , "js-bigints"
@@ -31,6 +32,7 @@
   , "typelevel-prelude"
   , "unsafe-coerce"
   , "variant"
+  , "yoga-tree"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs" ]

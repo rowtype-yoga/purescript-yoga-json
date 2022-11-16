@@ -11,7 +11,6 @@ module Yoga.JSON
   , parseJSON
   , undefined
   , unsafeStringify
-
   , class ReadForeign
   , readImpl
   , class ReadForeignFields
@@ -21,20 +20,19 @@ module Yoga.JSON
   , class ReadTuple
   , readTupleImpl
   , tupleSize
-
   , class WriteForeign
   , writeImpl
   , class WriteForeignFields
   , writeImplFields
   , class WriteForeignVariant
   , writeVariantImpl
-
   ) where
 
 import Prelude
 
 import Control.Alt ((<|>))
 import Control.Apply (lift2)
+import Control.Comonad.Cofree as Cofree
 import Control.Monad.Except (ExceptT(..), except, runExcept, throwError, withExcept)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
@@ -78,6 +76,8 @@ import Record.Builder (Builder)
 import Record.Builder as Builder
 import Type.Prelude (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
+import Yoga.Tree (Tree)
+import Yoga.Tree as Tree
 
 -- | An alias for the Either result of decoding
 type E a = Either MultipleErrors a
@@ -593,3 +593,17 @@ sequenceCombining = foldl fn (Right mempty) >>> except
       Left errs, Right _ → Left errs
       Right values, Right value → Right (values <> pure value)
       Right _, Left errs → Left errs
+
+instance WriteForeign a ⇒ WriteForeign (Tree a) where
+  writeImpl ∷ Tree a → Foreign
+  writeImpl t = write { value: Cofree.head t, children }
+    where
+    tail = Cofree.tail t
+    children = if Array.null tail then Nothing else Just (writeImpl <$> tail)
+
+instance ReadForeign a ⇒ ReadForeign (Tree a) where
+  readImpl f = do
+    { value, children } ∷ { value ∷ a, children ∷ Maybe (Array Foreign) } ← readImpl f
+    case children of
+      Nothing → pure (Tree.leaf value)
+      Just cs → traverse readImpl cs <#> Tree.mkTree value
