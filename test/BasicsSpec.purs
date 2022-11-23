@@ -13,6 +13,7 @@ import Data.Maybe (Maybe(..), fromJust, fromMaybe')
 import Data.Newtype (class Newtype, un)
 import Data.Nullable as Nullable
 import Data.String.NonEmpty (NonEmptyString, nes)
+import Data.Time.Duration (Days(..), Hours(..), Milliseconds(..), Minutes(..), Seconds(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (Variant, inj)
@@ -104,6 +105,28 @@ spec = describe "En- and decoding" $ do
       let result = writeJSON someDate
       let expected = show "2022-01-01T00:00:00.000Z"
       result `shouldEqual` expected
+
+  describe "works with Durations" do
+    it "roundtrips" do
+      let millis = Milliseconds 16.67
+      roundtrips millis
+      writeJSON millis `shouldEqual` "16.67"
+
+      let seconds = Seconds 60.0
+      roundtrips seconds
+      writeJSON seconds `shouldEqual` "60"
+
+      let minutes = Minutes 10.0
+      roundtrips minutes
+      writeJSON minutes `shouldEqual` "10"
+
+      let hours = Hours 24.0
+      roundtrips hours
+      writeJSON hours `shouldEqual` "24"
+
+      let days = Days 365.0
+      roundtrips days
+      writeJSON days `shouldEqual` "365"
 
   describe "works on record types" do
     it "roundtrips" do

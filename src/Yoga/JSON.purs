@@ -57,7 +57,7 @@ import Data.Number as Number
 import Data.String.NonEmpty.Internal (NonEmptyString)
 import Data.String.NonEmpty.Internal as NonEmptyString
 import Data.Symbol (class IsSymbol, reflectSymbol)
-import Data.Time.Duration (Milliseconds(..))
+import Data.Time.Duration (Days(..), Hours(..), Milliseconds(..), Minutes(..), Seconds(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Data.Variant (Variant, inj, on)
@@ -589,6 +589,30 @@ instance WriteForeign Milliseconds where
   writeImpl = unwrap >>> writeImpl
 
 instance ReadForeign Milliseconds where
+  readImpl = readImpl >>> map wrap
+
+instance WriteForeign Seconds where
+  writeImpl = unwrap >>> writeImpl
+
+instance ReadForeign Seconds where
+  readImpl = readImpl >>> map wrap
+
+instance WriteForeign Minutes where
+  writeImpl = unwrap >>> writeImpl
+
+instance ReadForeign Minutes where
+  readImpl = readImpl >>> map wrap
+
+instance WriteForeign Hours where
+  writeImpl = unwrap >>> writeImpl
+
+instance ReadForeign Hours where
+  readImpl = readImpl >>> map wrap
+
+instance WriteForeign Days where
+  writeImpl = unwrap >>> writeImpl
+
+instance ReadForeign Days where
   readImpl = readImpl >>> map wrap
 
 unsafeStringToInt ∷ String → Int
