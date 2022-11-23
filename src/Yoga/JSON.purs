@@ -11,7 +11,6 @@ module Yoga.JSON
   , parseJSON
   , undefined
   , unsafeStringify
-
   , class ReadForeign
   , readImpl
   , class ReadForeignFields
@@ -21,25 +20,25 @@ module Yoga.JSON
   , class ReadTuple
   , readTupleImpl
   , tupleSize
-
   , class WriteForeign
   , writeImpl
   , class WriteForeignFields
   , writeImplFields
   , class WriteForeignVariant
   , writeVariantImpl
-
   ) where
 
 import Prelude
 
 import Control.Alt ((<|>))
 import Control.Apply (lift2)
+import Control.Comonad.Cofree as Cofree
 import Control.Monad.Except (ExceptT(..), except, runExcept, throwError, withExcept)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
 import Data.Bifunctor (lmap)
 import Data.DateTime (DateTime)
+import Data.DateTime.Instant (Instant, instant, unInstant)
 import Data.Either (Either(..), hush, note)
 import Data.Foldable (class Foldable, foldl)
 import Data.FoldableWithIndex (foldrWithIndex)
@@ -52,12 +51,13 @@ import Data.List.NonEmpty (NonEmptyList, singleton)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', maybe)
-import Data.Newtype (class Newtype)
+import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Number as Number
 import Data.String.NonEmpty.Internal (NonEmptyString)
 import Data.String.NonEmpty.Internal as NonEmptyString
 import Data.Symbol (class IsSymbol, reflectSymbol)
+import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Data.Variant (Variant, inj, on)
@@ -78,6 +78,8 @@ import Record.Builder (Builder)
 import Record.Builder as Builder
 import Type.Prelude (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
+import Yoga.Tree (Tree)
+import Yoga.Tree as Tree
 
 -- | An alias for the Either result of decoding
 type E a = Either MultipleErrors a
@@ -573,6 +575,22 @@ instance ReadForeign DateTime where
       >>> note (pure $ ForeignError "Invalid date time")
       >>> except
 
+instance WriteForeign Instant where
+  writeImpl = unInstant >>> writeImpl
+
+instance ReadForeign Instant where
+  readImpl f = do
+    millis ← readImpl f
+    case instant millis of
+      Nothing → except $ Left (pure $ ForeignError "Invalid instant")
+      Just ins → pure ins
+
+instance WriteForeign Milliseconds where
+  writeImpl = unwrap >>> writeImpl
+
+instance ReadForeign Milliseconds where
+  readImpl = readImpl >>> map wrap
+
 unsafeStringToInt ∷ String → Int
 unsafeStringToInt = Int.fromString >>>
   (fromMaybe' \_ → unsafeCrashWith "impossible")
@@ -593,3 +611,17 @@ sequenceCombining = foldl fn (Right mempty) >>> except
       Left errs, Right _ → Left errs
       Right values, Right value → Right (values <> pure value)
       Right _, Left errs → Left errs
+
+instance WriteForeign a ⇒ WriteForeign (Tree a) where
+  writeImpl ∷ Tree a → Foreign
+  writeImpl t = write { value: Cofree.head t, children }
+    where
+    tail = Cofree.tail t
+    children = if Array.null tail then Nothing else Just (writeImpl <$> tail)
+
+instance ReadForeign a ⇒ ReadForeign (Tree a) where
+  readImpl f = do
+    { value, children } ∷ { value ∷ a, children ∷ Maybe (Array Foreign) } ← readImpl f
+    case children of
+      Nothing → pure (Tree.leaf value)
+      Just cs → traverse readImpl cs <#> Tree.mkTree value
