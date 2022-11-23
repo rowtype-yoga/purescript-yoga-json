@@ -2,7 +2,6 @@ module Test.BasicsSpec where
 
 import Prelude
 
-import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
@@ -60,8 +59,6 @@ spec = describe "En- and decoding" $ do
     it "roundtrips LazyList" $ traverse_ roundtrips (LazyList.fromFoldable [ [ "A", "B" ], [] ])
     it "roundtrips List" $ traverse_ roundtrips (List.fromFoldable [ [ "A", "B" ], [] ])
     it "roundtrips NonEmptyArray" $ roundtrips (NEA.cons' "A" [ "B" ])
-    it "decodes Maybe NonEmptyArray" $
-      readJSON "[]" `shouldEqual` Right (Nothing ∷ _ (NonEmptyArray Int))
     it "roundtrips Object" $ roundtrips (Object.fromHomogeneous { a: 12, b: 54 })
     it "roundtrips String Map" $ roundtrips (Map.fromFoldable [ ("A" /\ 8), ("C" /\ 7) ])
     it "roundtrips Int Map" $ roundtrips (Map.fromFoldable [ (4 /\ "B"), (8 /\ "D") ])
@@ -175,9 +172,6 @@ spec = describe "En- and decoding" $ do
     it "fails to decode empty strings" do
       let (result ∷ (Either _ NonEmptyString)) = readJSON (show "")
       result `shouldEqual` Left (pure $ ForeignError "String must not be empty")
-    it "succeeds decoding optional empty strings" do
-      let (result ∷ (Either _ (Maybe NonEmptyString))) = readJSON (show "")
-      result `shouldEqual` Right Nothing
 
   describe "works on trees" do
     it "roundtrips" do

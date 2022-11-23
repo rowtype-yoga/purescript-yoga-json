@@ -36,7 +36,6 @@ import Control.Comonad.Cofree as Cofree
 import Control.Monad.Except (ExceptT(..), except, runExcept, throwError, withExcept)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray, toArray)
-import Data.Array.NonEmpty as NonEmptyArray
 import Data.Bifunctor (lmap)
 import Data.DateTime (DateTime)
 import Data.DateTime.Instant (Instant, instant, unInstant)
@@ -55,10 +54,10 @@ import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', maybe)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Number as Number
-import Data.String.NonEmpty (NonEmptyString)
-import Data.String.NonEmpty as NonEmptyString
+import Data.String.NonEmpty.Internal (NonEmptyString)
+import Data.String.NonEmpty.Internal as NonEmptyString
 import Data.Symbol (class IsSymbol, reflectSymbol)
-import Data.Time.Duration (Days, Hours, Milliseconds, Minutes, Seconds)
+import Data.Time.Duration (Days(..), Hours(..), Milliseconds(..), Minutes(..), Seconds(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Data.Variant (Variant, inj, on)
@@ -229,13 +228,7 @@ instance ReadForeign Boolean where
 instance ReadForeign a ⇒ ReadForeign (Array a) where
   readImpl = sequenceCombining <<< mapWithIndex readAtIdx <=< readArray
 
-instance ReadForeign (Maybe (NonEmptyString)) where
-  readImpl = readImpl >=> pure <<< NonEmptyString.fromString
-
-else instance ReadForeign a ⇒ ReadForeign (Maybe (NonEmptyArray a)) where
-  readImpl = readImpl >=> pure <<< NonEmptyArray.fromArray
-
-else instance ReadForeign a ⇒ ReadForeign (Maybe a) where
+instance ReadForeign a ⇒ ReadForeign (Maybe a) where
   readImpl = readNullOrUndefined readImpl
     where
     readNullOrUndefined _ value | isNull value || isUndefined value = pure
