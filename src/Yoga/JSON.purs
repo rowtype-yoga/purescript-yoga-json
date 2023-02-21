@@ -68,8 +68,8 @@ import Foreign (F, Foreign, ForeignError(..), MultipleErrors, fail, isNull, isUn
 import Foreign.Index (readProp)
 import Foreign.Object (Object)
 import Foreign.Object as Object
-import Js.BigInt.BigInt (BigInt)
-import Js.BigInt.BigInt (fromInt, fromNumber, fromString) as BigInt
+import JS.BigInt (BigInt)
+import JS.BigInt (fromInt, fromNumber, fromString) as BigInt
 import Partial.Unsafe (unsafeCrashWith)
 import Prim.Row as Row
 import Prim.RowList (class RowToList, Cons, Nil, RowList)

@@ -21,8 +21,8 @@ import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
 import Foreign (ForeignError(..))
 import Foreign.Object as Object
-import Js.BigInt.BigInt (BigInt)
-import Js.BigInt.BigInt as BigInt
+import JS.BigInt (BigInt)
+import JS.BigInt as BigInt
 import Partial.Unsafe (unsafeCrashWith, unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
