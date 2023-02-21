@@ -66,6 +66,8 @@ spec = describe "En- and decoding" $ do
       $ roundtrips (Map.fromFoldable [ (Stringy "A" /\ "B"), (Stringy "C" /\ "D") ])
     it "roundtrips Map with Int newtype keys"
       $ roundtrips (Map.fromFoldable [ (Inty 4 /\ "B"), (Inty 8 /\ "D") ])
+    it "roundtrips Map with BigInt newtype keys"
+      $ roundtrips (Map.fromFoldable [ (BigInty (BigInt.fromInt 5) /\ "B"), (BigInty big /\ "D") ])
     it "roundtrips BigInt" do
       let
         inputStr = """{ "number":1, "big": 18014398509481982, "mediumBig": 1652955871799, "smallBig": 10 }"""
@@ -79,7 +81,6 @@ spec = describe "En- and decoding" $ do
     it "roundtrips BigInt (2)" do
       let
         smallBig = BigInt.fromInt 10
-        big = unsafePartial $ fromJust $ BigInt.fromString "18014398509481982"
 
         expected = { big, smallBig }
         json = writeJSON expected
@@ -217,3 +218,14 @@ derive newtype instance Eq Inty
 derive newtype instance Ord Inty
 derive newtype instance WriteForeign Inty
 derive newtype instance ReadForeign Inty
+
+newtype BigInty = BigInty BigInt
+
+derive instance Newtype BigInty _
+derive newtype instance Show BigInty
+derive newtype instance Eq BigInty
+derive newtype instance Ord BigInty
+derive newtype instance WriteForeign BigInty
+derive newtype instance ReadForeign BigInty
+
+big = unsafePartial $ fromJust $ BigInt.fromString "18014398509481982"

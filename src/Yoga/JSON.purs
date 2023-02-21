@@ -69,7 +69,7 @@ import Foreign.Index (readProp)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import JS.BigInt (BigInt)
-import JS.BigInt (fromInt, fromNumber, fromString) as BigInt
+import JS.BigInt (fromInt, fromNumber, fromString, toString) as BigInt
 import Partial.Unsafe (unsafeCrashWith)
 import Prim.Row as Row
 import Prim.RowList (class RowToList, Cons, Nil, RowList)
@@ -549,6 +549,8 @@ instance (WriteForeign a) ⇒ WriteForeign (Map String a) where
   writeImpl = foldrWithIndex Object.insert Object.empty >>> writeImpl
 else instance (WriteForeign a) ⇒ WriteForeign (Map Int a) where
   writeImpl = foldrWithIndex (show >>> Object.insert) Object.empty >>> writeImpl
+else instance (WriteForeign a) ⇒ WriteForeign (Map BigInt a) where
+  writeImpl = foldrWithIndex (BigInt.toString >>> Object.insert) Object.empty >>> writeImpl
 else instance (Newtype nt key, WriteForeign (Map key value)) ⇒ WriteForeign (Map nt value) where
   writeImpl = (unsafeCoerce ∷ (_ → Map key value)) >>> writeImpl
 
@@ -556,6 +558,8 @@ instance (ReadForeign a) ⇒ ReadForeign (Map String a) where
   readImpl = (readImpl ∷ (_ → _ (Object a))) >>> map (foldrWithIndex Map.insert Map.empty)
 else instance (ReadForeign a) ⇒ ReadForeign (Map Int a) where
   readImpl = (readImpl ∷ (_ → _ (Object a))) >>> map (foldrWithIndex (unsafeStringToInt >>> Map.insert) Map.empty)
+else instance (ReadForeign a) ⇒ ReadForeign (Map BigInt a) where
+  readImpl = (readImpl ∷ (_ → _ (Object a))) >>> map (foldrWithIndex (unsafeStringToBigInt >>> Map.insert) Map.empty)
 else instance (Newtype nt key, ReadForeign (Map key value)) ⇒ ReadForeign (Map nt value) where
   readImpl = (readImpl ∷ (_ → _ (Map key value))) >>> map (unsafeCoerce ∷ (Map key value → Map nt value))
 
@@ -617,6 +621,10 @@ instance ReadForeign Days where
 
 unsafeStringToInt ∷ String → Int
 unsafeStringToInt = Int.fromString >>>
+  (fromMaybe' \_ → unsafeCrashWith "impossible")
+
+unsafeStringToBigInt ∷ String → BigInt
+unsafeStringToBigInt = BigInt.fromString >>>
   (fromMaybe' \_ → unsafeCrashWith "impossible")
 
 sequenceCombining ∷
