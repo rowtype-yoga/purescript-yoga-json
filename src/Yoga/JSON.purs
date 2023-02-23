@@ -4,6 +4,7 @@ module Yoga.JSON
   , readJSON'
   , readJSON_
   , writeJSON
+  , writePrettyJSON
   , write
   , read
   , read'
@@ -113,6 +114,9 @@ readJSON_ = hush <<< readJSON
 -- | JSON.stringify
 foreign import _unsafeStringify ∷ ∀ a. a → String
 
+-- | JSON.stringify with a number of spaces
+foreign import _unsafePrettyStringify ∷ ∀ a. Int -> a → String
+
 unsafeStringify ∷ ∀ a. a → String
 unsafeStringify = _unsafeStringify
 
@@ -123,6 +127,14 @@ writeJSON ∷
   a →
   String
 writeJSON = _unsafeStringify <<< writeImpl
+
+writePrettyJSON ∷
+  ∀ a.
+  WriteForeign a ⇒
+  Int →
+  a →
+  String
+writePrettyJSON spaces = _unsafePrettyStringify spaces <<< writeImpl
 
 write ∷
   ∀ a.

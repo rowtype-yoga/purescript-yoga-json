@@ -16,3 +16,4 @@ function replacer(key, value) {
 }
 
 export const _unsafeStringify = (data) => JSON.stringify(data, replacer);
+export const _unsafePrettyStringify = spaces => data => JSON.stringify(data, replacer, spaces);
