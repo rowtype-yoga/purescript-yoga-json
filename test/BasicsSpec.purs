@@ -12,6 +12,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust, fromMaybe')
 import Data.Newtype (class Newtype, un)
 import Data.Nullable as Nullable
+import Data.Set as Set
 import Data.String.NonEmpty (NonEmptyString, nes)
 import Data.Time.Duration (Days(..), Hours(..), Milliseconds(..), Minutes(..), Seconds(..))
 import Data.Tuple (Tuple(..))
@@ -68,6 +69,7 @@ spec = describe "En- and decoding" $ do
       $ roundtrips (Map.fromFoldable [ (Inty 4 /\ "B"), (Inty 8 /\ "D") ])
     it "roundtrips Map with BigInt newtype keys"
       $ roundtrips (Map.fromFoldable [ (BigInty (BigInt.fromInt 5) /\ "B"), (BigInty big /\ "D") ])
+    it "roundtrips Set String" $ roundtrips (Set.fromFoldable [ "A", "B", "C" ])
     it "roundtrips BigInt" do
       let
         inputStr = """{ "number":1, "big": 18014398509481982, "mediumBig": 1652955871799, "smallBig": 10 }"""
