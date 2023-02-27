@@ -55,6 +55,8 @@ import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', maybe)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.Number as Number
+import Data.Set (Set)
+import Data.Set as Set
 import Data.String.NonEmpty.Internal (NonEmptyString)
 import Data.String.NonEmpty.Internal as NonEmptyString
 import Data.Symbol (class IsSymbol, reflectSymbol)
@@ -574,6 +576,13 @@ else instance (ReadForeign a) ⇒ ReadForeign (Map BigInt a) where
   readImpl = (readImpl ∷ (_ → _ (Object a))) >>> map (foldrWithIndex (unsafeStringToBigInt >>> Map.insert) Map.empty)
 else instance (Newtype nt key, ReadForeign (Map key value)) ⇒ ReadForeign (Map nt value) where
   readImpl = (readImpl ∷ (_ → _ (Map key value))) >>> map (unsafeCoerce ∷ (Map key value → Map nt value))
+
+-- Set instances
+instance (WriteForeign a) ⇒ WriteForeign (Set a) where
+  writeImpl set = writeImpl (Set.toUnfoldable set :: Array a)
+
+instance (Ord a, ReadForeign a) ⇒ ReadForeign (Set a) where
+  readImpl f = Set.fromFoldable <$> (readImpl f :: F (Array a))
 
 -- Date instances
 instance WriteForeign JSDate where
