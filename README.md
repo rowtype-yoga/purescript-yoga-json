@@ -2,8 +2,8 @@
 
 `yoga-json` is a light-weight and simple json library for purescript. 
 
-**Note**: This library was initially forked from the amazing [simple-json](https://github.com/justinwoo/purescript-simple-json) ([MIT Licence](./LICENSE/simple-json.LICENSE)). See [migrate from `simple-json`](#migrate-from-purescript-simple-json) for migration instructions.
-
+**Note**: This library was initially forked from the amazing [simple-json](https://github.com/justinwoo/purescript-simple-json) ([MIT Licence](./LICENSE/simple-json.LICENSE)).
+Replace your imports from `Simple.JSON` to `Yoga.JSON` to migrate.
 ## Table of Contents
 * [features](#features)
 * [installation](#installation)
