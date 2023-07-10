@@ -124,7 +124,7 @@ instance WriteForeign TrafficLight where
   writeImpl Yellow = writeImpl "yellow"
   writeImpl Green = writeImpl "green"
 ```
-This works, because `yoga-json` already nows how to serialise a `String`. 
+This works, because `yoga-json` already knows how to serialise a `String`. 
 
 Similarly, we need to provide an implementation for the `ReadForeign` type class, that tells `yoga-json` how to deserialise the type. We start by deserialising into a primitive type, typically a String or an Object, and then convert it to our desired Purescript type.
 
