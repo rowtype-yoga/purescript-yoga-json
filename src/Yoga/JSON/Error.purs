@@ -3,6 +3,10 @@ module Yoga.JSON.Error where
 import Prelude
 
 import Foreign (ForeignError(..))
+import Data.Semigroup.Foldable (intercalateMap)
+import Data.Bifunctor (lmap)
+import Yoga.JSON (E)
+import Data.Either (Either)
 
 toJSONPath ∷ ForeignError → String
 toJSONPath fe = "$" <> path
@@ -19,6 +23,9 @@ renderHumanError ∷ ForeignError → String
 renderHumanError = errorToJSON >>> toHuman
   where
   toHuman { message, path } = message <> " at " <> path
+
+withStringErrors :: forall a. E a -> Either String a
+withStringErrors = lmap (intercalateMap "\n" renderHumanError)
 
 errorToJSON ∷
   ForeignError →
