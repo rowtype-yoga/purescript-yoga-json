@@ -1,5 +1,9 @@
 # Changelog
 
+## v4.0.1
+
+- Allow the type of `read*` functions to be visibly applied (#24 by @postsolar)
+
 ## v4.0.0
 - Replace `bigints` dependency with `js-bigints` so that no more external npm dependency is needed (#11 by @sigma-andex)
 
