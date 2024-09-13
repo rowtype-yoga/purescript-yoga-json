@@ -90,7 +90,7 @@ type E a = Either MultipleErrors a
 -- | Read a JSON string to a type `a` while returning a `MultipleErrors` if the
 -- | parsing failed.
 readJSON ∷
-  ∀ a.
+  ∀ @a.
   ReadForeign a ⇒
   String →
   E a
@@ -98,7 +98,7 @@ readJSON = runExcept <<< (readImpl <=< parseJSON)
 
 -- | Read a JSON string to a type `a` using `F a`. Useful with record types.
 readJSON' ∷
-  ∀ a.
+  ∀ @a.
   ReadForeign a ⇒
   String →
   F a
@@ -107,7 +107,7 @@ readJSON' = readImpl <=< parseJSON
 -- | Read a JSON string to a type `a` while returning `Nothing` if the parsing
 -- | failed.
 readJSON_ ∷
-  ∀ a.
+  ∀ @a.
   ReadForeign a ⇒
   String →
   Maybe a
@@ -147,14 +147,14 @@ write = writeImpl
 
 -- | Read a Foreign value to a type
 read ∷
-  ∀ a.
+  ∀ @a.
   ReadForeign a ⇒
   Foreign →
   E a
 read = runExcept <<< readImpl
 
 read' ∷
-  ∀ a.
+  ∀ @a.
   ReadForeign a ⇒
   Foreign →
   F a
@@ -162,7 +162,7 @@ read' = readImpl
 
 -- | Read a Foreign value to a type, as a Maybe of type
 read_ ∷
-  ∀ a.
+  ∀ @a.
   ReadForeign a ⇒
   Foreign →
   Maybe a
