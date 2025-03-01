@@ -41,6 +41,12 @@ package:
       - spec-discovery
       - strings-extra
 
+  publish:
+    version: 5.2.0
+    license: MIT
+    location:
+      githubOwner: rowtype-yoga
+      githubRepo: purescript-yoga-json
 workspace:
   packageSet:
     registry: 63.2.1
