@@ -1,0 +1,46 @@
+package:
+  name: yoga-json
+  dependencies:
+    - arrays
+    - bifunctors
+    - control
+    - datetime
+    - effect
+    - either
+    - exceptions
+    - foldable-traversable
+    - foreign
+    - foreign-object
+    - free
+    - identity
+    - integers
+    - js-bigints
+    - js-date
+    - lists
+    - maybe
+    - newtype
+    - nullable
+    - numbers
+    - ordered-collections
+    - partial
+    - prelude
+    - record
+    - strings
+    - transformers
+    - tuples
+    - typelevel-prelude
+    - unsafe-coerce
+    - variant
+    - yoga-tree
+    - js-bigints
+  test:
+    main: Test.Main
+    dependencies:
+      - spec
+      - spec-node
+      - spec-discovery
+      - strings-extra
+
+workspace:
+  packageSet:
+    registry: 63.2.1
