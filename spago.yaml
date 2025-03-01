@@ -25,6 +25,7 @@ package:
     - partial
     - prelude
     - record
+    - safe-coerce
     - strings
     - transformers
     - tuples
@@ -32,7 +33,6 @@ package:
     - unsafe-coerce
     - variant
     - yoga-tree
-    - js-bigints
   test:
     main: Test.Main
     dependencies:
