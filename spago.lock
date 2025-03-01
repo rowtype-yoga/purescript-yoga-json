@@ -29,6 +29,7 @@
             "partial",
             "prelude",
             "record",
+            "safe-coerce",
             "strings",
             "transformers",
             "tuples",
