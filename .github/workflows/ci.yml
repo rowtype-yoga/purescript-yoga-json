@@ -12,7 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: purescript-contrib/setup-purescript@unstable
+      - uses: purescript-contrib/setup-purescript@main
+        with:
+          spago: "unstable"
 
       - uses: actions/setup-node@v2
         with:
