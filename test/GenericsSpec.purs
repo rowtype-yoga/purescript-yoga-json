@@ -14,7 +14,7 @@ import Yoga.JSON.Generics as GenericTaggedSum
 import Yoga.JSON.Generics.EnumSumRep as Enum
 
 spec ∷ Spec Unit
-spec = describe "Generics" $ do
+spec = describe "Generics" do
 
   describe "Enum" do
     describe "MyEnum = Enum1 | Enum2 | Enum3" do

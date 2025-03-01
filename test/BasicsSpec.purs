@@ -34,7 +34,7 @@ import Yoga.JSON.Variant (TaggedVariant(..), UntaggedVariant(..))
 import Yoga.Tree (Tree, mkLeaf, mkTree, showTree)
 
 spec ∷ Spec Unit
-spec = describe "En- and decoding" $ do
+spec = describe "En- and decoding" do
 
   describe "works on primitive types" do
     it "roundtrips Number" $ roundtrips 3.1414
@@ -53,7 +53,8 @@ spec = describe "En- and decoding" $ do
       roundtrips ((Right 3) ∷ Either String Int)
       writeJSON (Right 3 ∷ Either Int Int) `shouldEqual` """{"value":3,"type":"right"}"""
       writeJSON (Left true ∷ Either Boolean Int) `shouldEqual` """{"value":true,"type":"left"}"""
-    it "roundtrips Tuple" $ do
+
+    it "roundtrips Tuple" do
       roundtrips (Tuple 3 4)
       roundtrips ("4" /\ 8 /\ Just 4)
     it "roundtrips Array" $ traverse_ roundtrips [ [ "A", "B" ], [] ]
@@ -135,6 +136,7 @@ spec = describe "En- and decoding" $ do
     it "roundtrips" do
       roundtrips { a: 12, b: "54" }
       roundtrips { a: 12, b: { c: "54" } }
+      roundtrips {}
 
   describe "works on newtypes" do
     it "roundtrips" do
