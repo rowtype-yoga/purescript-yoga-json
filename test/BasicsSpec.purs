@@ -230,4 +230,5 @@ derive newtype instance Ord BigInty
 derive newtype instance WriteForeign BigInty
 derive newtype instance ReadForeign BigInty
 
+big ∷ BigInt
 big = unsafePartial $ fromJust $ BigInt.fromString "18014398509481982"

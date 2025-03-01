@@ -60,7 +60,7 @@ import Data.Set as Set
 import Data.String.NonEmpty.Internal (NonEmptyString)
 import Data.String.NonEmpty.Internal as NonEmptyString
 import Data.Symbol (class IsSymbol, reflectSymbol)
-import Data.Time.Duration (Days(..), Hours(..), Milliseconds(..), Minutes(..), Seconds(..))
+import Data.Time.Duration (Days, Hours, Milliseconds, Minutes, Seconds)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Data.Variant (Variant, inj, on)
@@ -117,7 +117,7 @@ readJSON_ = hush <<< readJSON
 foreign import _unsafeStringify ∷ ∀ a. a → String
 
 -- | JSON.stringify with a number of spaces
-foreign import _unsafePrettyStringify ∷ ∀ a. Int -> a → String
+foreign import _unsafePrettyStringify ∷ ∀ a. Int → a → String
 
 unsafeStringify ∷ ∀ a. a → String
 unsafeStringify = _unsafeStringify
@@ -579,10 +579,10 @@ else instance (Newtype nt key, ReadForeign (Map key value)) ⇒ ReadForeign (Map
 
 -- Set instances
 instance (WriteForeign a) ⇒ WriteForeign (Set a) where
-  writeImpl set = writeImpl (Set.toUnfoldable set :: Array a)
+  writeImpl set = writeImpl (Set.toUnfoldable set ∷ Array a)
 
 instance (Ord a, ReadForeign a) ⇒ ReadForeign (Set a) where
-  readImpl f = Set.fromFoldable <$> (readImpl f :: F (Array a))
+  readImpl f = Set.fromFoldable <$> (readImpl f ∷ F (Array a))
 
 -- Date instances
 instance WriteForeign JSDate where
