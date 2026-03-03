@@ -10,3 +10,4 @@
 /coverage/
 /.idea/
 .spec-results
+.DS_Store
