@@ -8,6 +8,9 @@ export const _parseJSON = (payload) => JSON.parse(payload, reviver);
 
 export const _undefined = undefined;
 
+export const _hasOwnProperty = (key) => (obj) =>
+  obj != null && Object.prototype.hasOwnProperty.call(obj, key);
+
 function replacer(key, value) {
   if (typeof value === "bigint") {
     return value.toString();

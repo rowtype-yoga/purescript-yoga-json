@@ -3,6 +3,7 @@ module Test.BasicsSpec where
 import Prelude
 
 import Data.Array.NonEmpty as NEA
+import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Data.JSDate as JSDate
@@ -18,6 +19,7 @@ import Data.Time.Duration (Days(..), Hours(..), Milliseconds(..), Minutes(..), S
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (Variant, inj)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
 import Foreign (ForeignError(..))
@@ -29,7 +31,7 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Util (roundtrips)
 import Type.Proxy (Proxy(..))
-import Yoga.JSON (class ReadForeign, class WriteForeign, readJSON, writeJSON)
+import Yoga.JSON (class ReadForeign, class WriteForeign, read, readJSON, write, writeJSON)
 import Yoga.JSON.Variant (TaggedVariant(..), UntaggedVariant(..))
 import Yoga.Tree (Tree, mkLeaf, mkTree, showTree)
 
@@ -147,6 +149,31 @@ spec = describe "En- and decoding" do
       roundtrips (inj (Proxy ∷ _ "erwin") "e" ∷ Variant ("erwin" ∷ String))
       roundtrips (inj (Proxy ∷ _ "jackie") 7 ∷ Variant ExampleVariant)
 
+    it "reads back the member that was written" do
+      let
+        roundtripsExactly ∷ Variant PermissiveVariant → Aff Unit
+        roundtripsExactly v = do
+          readJSON (writeJSON v) `shouldEqual` Right v
+          read (write v) `shouldEqual` Right v
+      roundtripsExactly (inj (Proxy ∷ _ "withData") { someData: "aoeu" })
+      roundtripsExactly (inj (Proxy ∷ _ "optionalData") { someData: Just "aoeu" })
+      roundtripsExactly (inj (Proxy ∷ _ "optionalData") { someData: Nothing })
+      roundtripsExactly (inj (Proxy ∷ _ "maybe") (Just 1))
+      roundtripsExactly (inj (Proxy ∷ _ "maybe") Nothing)
+      roundtripsExactly (inj (Proxy ∷ _ "aEmpty") {})
+
+    it "fails on an object without a member key" do
+      let
+        parsed ∷ _ (Variant PermissiveVariant)
+        parsed = readJSON """{"unknown":{}}"""
+      (lmap (const unit) parsed) `shouldEqual` Left unit
+
+    it "fails on a non-object" do
+      let
+        parsed ∷ _ (Variant PermissiveVariant)
+        parsed = readJSON "\"aEmpty\""
+      (lmap (const unit) parsed) `shouldEqual` Left unit
+
   describe "works on tagged variant types" do
     it "roundtrips" do
       roundtrips (TaggedVariant (erwin "e") ∷ TaggedVariant "super" "hans" (Erwin ()))
@@ -199,6 +226,15 @@ derive newtype instance Eq ShowTree
 
 type ExampleVariant = ("erwin" ∷ String, "jackie" ∷ Int)
 type ExampleTaggedVariant t v = TaggedVariant t v ExampleVariant
+
+-- | Every member here but `withData` reads successfully from `undefined`.
+type PermissiveVariant =
+  ( aEmpty ∷ {}
+  , maybe ∷ Maybe Int
+  , optionalData ∷ { someData ∷ Maybe String }
+  , withData ∷ { someData ∷ String }
+  , zEmpty ∷ {}
+  )
 
 erwin ∷ ∀ a r. a → Variant (erwin ∷ a | r)
 erwin = inj (Proxy ∷ Proxy "erwin")

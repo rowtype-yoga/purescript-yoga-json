@@ -186,6 +186,11 @@ foreign import _undefined ∷ Foreign
 undefined ∷ Foreign
 undefined = _undefined
 
+foreign import _hasOwnProperty ∷ String → Foreign → Boolean
+
+hasOwnProperty ∷ String → Foreign → Boolean
+hasOwnProperty = _hasOwnProperty
+
 -- | A class for reading foreign values to a type
 class ReadForeign a where
   readImpl ∷ Foreign → F a
@@ -386,7 +391,9 @@ instance
   , ReadForeignVariant rl variants
   ) ⇒
   ReadForeign (Variant variants) where
-  readImpl o = readVariantImpl (Proxy ∷ Proxy rl) o
+  readImpl o
+    | tagOf o == "Object" = readVariantImpl (Proxy ∷ Proxy rl) o
+    | otherwise = fail $ TypeMismatch "Object" (tagOf o)
 
 class
   ReadForeignVariant (xs ∷ RowList Type) (row ∷ Row Type)
@@ -404,11 +411,16 @@ instance
   ) ⇒
   ReadForeignVariant (Cons name ty tail) row where
   readVariantImpl _ o = readVariantImpl (Proxy ∷ Proxy tail) o <|> ado
-    value ∷ ty ← readProp name o >>= readImpl
+    value ∷ ty ← readMember
     in inj namep value
     where
     namep = Proxy ∷ Proxy name
     name = reflectSymbol namep
+    -- Only the member whose key is present may match. Reading an absent key
+    -- yields `undefined`, which types like `{}` and `Maybe a` accept.
+    readMember
+      | hasOwnProperty name o = readProp name o >>= readImpl
+      | otherwise = fail $ ErrorAtProperty name $ ForeignError "Missing variant member"
 
 instance
   ReadForeignVariant Nil trash where
@@ -545,7 +557,12 @@ instance
     where
     namep = Proxy ∷ Proxy name
     name = reflectSymbol namep
-    writeVariant value = writeImpl $ Object.singleton name (writeImpl value)
+    -- JSON.stringify drops keys whose value is `undefined` (e.g. `Nothing`),
+    -- which would lose the member name, so such payloads are written as `null`.
+    writeVariant value = writeImpl $ Object.singleton name (definedPayload (writeImpl value))
+    definedPayload payload
+      | isUndefined payload = unsafeToForeign (toNullable Nothing ∷ Nullable Foreign)
+      | otherwise = payload
 
 instance ReadForeign a ⇒ ReadForeign (NonEmptyArray a) where
   readImpl f = do
