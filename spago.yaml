@@ -42,7 +42,7 @@ package:
       - strings-extra
 
   publish:
-    version: 5.2.1
+    version: 5.2.2
     license: MIT
     location:
       githubOwner: rowtype-yoga

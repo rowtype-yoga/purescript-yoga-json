@@ -68,7 +68,7 @@ import Effect.Exception (message, try)
 import Effect.Uncurried as EU
 import Effect.Unsafe (unsafePerformEffect)
 import Foreign (F, Foreign, ForeignError(..), MultipleErrors, fail, isNull, isUndefined, readArray, readBoolean, readChar, readInt, readNull, readNumber, readString, tagOf, unsafeFromForeign, unsafeReadTagged, unsafeToForeign)
-import Foreign.Index (readProp)
+import Foreign.Index (hasOwnProperty, readProp)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import JS.BigInt (BigInt)
@@ -403,10 +403,13 @@ instance
   , ReadForeignVariant tail row
   ) ⇒
   ReadForeignVariant (Cons name ty tail) row where
-  readVariantImpl _ o = readVariantImpl (Proxy ∷ Proxy tail) o <|> ado
-    value ∷ ty ← readProp name o >>= readImpl
-    in inj namep value
+  readVariantImpl _ o =
+    if hasOwnProperty @String @Identity name o then rest <|> ado
+      value ∷ ty ← readProp name o >>= readImpl
+      in inj namep value
+    else rest
     where
+    rest = readVariantImpl (Proxy ∷ Proxy tail) o
     namep = Proxy ∷ Proxy name
     name = reflectSymbol namep
 

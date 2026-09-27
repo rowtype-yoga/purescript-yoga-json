@@ -3,7 +3,7 @@ module Test.BasicsSpec where
 import Prelude
 
 import Data.Array.NonEmpty as NEA
-import Data.Either (Either(..))
+import Data.Either (Either(..), isLeft)
 import Data.Foldable (traverse_)
 import Data.JSDate as JSDate
 import Data.List as List
@@ -144,8 +144,29 @@ spec = describe "En- and decoding" do
 
   describe "works on variant types" do
     it "roundtrips" do
-      roundtrips (inj (Proxy ∷ _ "erwin") "e" ∷ Variant ("erwin" ∷ String))
+      let input = inj (Proxy ∷ _ "a") {} ∷ Variant (a ∷ {}, b ∷ {})
+      let asJSON = writeJSON input
+      readJSON asJSON `shouldEqual` Right input
+
+      let input2 = inj (Proxy ∷ _ "b") {} ∷ Variant (a ∷ {}, b ∷ {})
+      let asJSON2 = writeJSON input2
+      readJSON asJSON2 `shouldEqual` Right input2
+
+      roundtrips (inj (Proxy ∷ _ "erwin") "e" ∷ Variant (erwin ∷ String))
       roundtrips (inj (Proxy ∷ _ "jackie") 7 ∷ Variant ExampleVariant)
+
+    it "does not select an absent optional branch" do
+      let expected = inj (Proxy ∷ _ "a") 42 ∷ Variant (a ∷ Int, b ∷ Maybe Int)
+      readJSON """{"a":42}""" `shouldEqual` Right expected
+
+    it "accepts an explicitly null optional branch" do
+      let expected = inj (Proxy ∷ _ "b") Nothing ∷ Variant (a ∷ Int, b ∷ Maybe Int)
+      readJSON """{"b":null}""" `shouldEqual` Right expected
+
+    it "rejects objects without a matching variant key" do
+      traverse_
+        (\json → isLeft (readJSON json ∷ _ (Variant (a ∷ {}, b ∷ {}))) `shouldEqual` true)
+        [ "{}", """{"unknown":{}}""" ]
 
   describe "works on tagged variant types" do
     it "roundtrips" do

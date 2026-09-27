@@ -1,5 +1,9 @@
 # Changelog
 
+## v5.2.2
+
+- Fix variant decoding selecting absent branches whose payload decoders accept missing values, such as empty records and `Maybe`. Branches now require an own property matching their label.
+
 ## v4.0.1
 
 - Allow the type of `read*` functions to be visibly applied (#24 by @postsolar)
