@@ -548,7 +548,11 @@ instance
     where
     namep = Proxy ∷ Proxy name
     name = reflectSymbol namep
-    writeVariant value = writeImpl $ Object.singleton name (writeImpl value)
+    writeVariant value = writeImpl $ Object.singleton name (nullIfUndefined (writeImpl value))
+    -- JSON.stringify drops undefined values, which would lose the label
+    nullIfUndefined payload
+      | isUndefined payload = unsafeToForeign $ toNullable Nothing
+      | otherwise = payload
 
 instance ReadForeign a ⇒ ReadForeign (NonEmptyArray a) where
   readImpl f = do
