@@ -163,6 +163,10 @@ spec = describe "En- and decoding" do
       let expected = inj (Proxy ∷ _ "b") Nothing ∷ Variant (a ∷ Int, b ∷ Maybe Int)
       readJSON """{"b":null}""" `shouldEqual` Right expected
 
+    it "roundtrips an undefined payload" do
+      let input = inj (Proxy ∷ _ "b") Nothing ∷ Variant (a ∷ Int, b ∷ Maybe Int)
+      readJSON (writeJSON input) `shouldEqual` Right input
+
     it "rejects objects without a matching variant key" do
       traverse_
         (\json → isLeft (readJSON json ∷ _ (Variant (a ∷ {}, b ∷ {}))) `shouldEqual` true)
